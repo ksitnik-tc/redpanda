@@ -119,6 +119,14 @@ public:
           .get();
     }
 
+    produce_result
+    produce_with_offset(const model::ntp& ntp, model::record_batch batch) {
+        return _kd->client()
+          .local()
+          .produce_with_offset(ntp.tp, std::move(batch))
+          .get();
+    }
+
     std::optional<cluster::topic_configuration>
     local_find_topic_cfg(model::topic_namespace_view tp_ns) {
         return _kd->local_metadata_cache()->find_topic_cfg(tp_ns);
@@ -336,6 +344,38 @@ TEST_P(KafkaDataRpcTest, ProduceRejectsUnderMemoryPressure) {
 
     auto result = produce(ntp, record_batches::make());
     EXPECT_EQ(result, cluster::errc::timeout);
+}
+
+TEST_P(KafkaDataRpcTest, ProduceWithOffsetSingleRecord) {
+    auto ntp = make_ntp("single_rec");
+    create_topic(model::topic_namespace(ntp.ns, ntp.tp.topic));
+
+    auto batch = model::test::make_random_batch({.count = 1, .records = 1});
+    auto r = produce_with_offset(ntp, std::move(batch));
+    ASSERT_EQ(r.ec, cluster::errc::success);
+    ASSERT_TRUE(r.base_offset.has_value());
+    ASSERT_TRUE(r.last_offset.has_value());
+    EXPECT_EQ(r.base_offset, r.last_offset);
+
+    // Second produce must land at the next offset.
+    auto batch2 = model::test::make_random_batch({.count = 1, .records = 1});
+    auto r2 = produce_with_offset(ntp, std::move(batch2));
+    ASSERT_EQ(r2.ec, cluster::errc::success);
+    EXPECT_EQ(*r2.base_offset, *r.last_offset + model::offset{1});
+}
+
+TEST_P(KafkaDataRpcTest, ProduceWithOffsetMultiRecord) {
+    auto ntp = make_ntp("multi_rec");
+    create_topic(model::topic_namespace(ntp.ns, ntp.tp.topic));
+
+    constexpr int num_records = 3;
+    auto batch = model::test::make_random_batch({.count = num_records});
+    ASSERT_EQ(batch.record_count(), num_records);
+    auto r = produce_with_offset(ntp, std::move(batch));
+    ASSERT_EQ(r.ec, cluster::errc::success);
+    ASSERT_TRUE(r.base_offset.has_value());
+    ASSERT_TRUE(r.last_offset.has_value());
+    EXPECT_EQ(*r.last_offset, *r.base_offset + model::offset{num_records - 1});
 }
 
 INSTANTIATE_TEST_SUITE_P(
