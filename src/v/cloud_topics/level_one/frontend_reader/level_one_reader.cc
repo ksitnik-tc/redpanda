@@ -40,7 +40,8 @@ level_one_log_reader_impl::level_one_log_reader_impl(
   l1::metastore* metastore,
   l1::io* io_interface,
   level_one_reader_probe* probe,
-  l1_reader_cache* cache)
+  l1_reader_cache* cache,
+  l1_footer_cache* footer_cache)
   : _config(cfg)
   , _ntp(std::move(ntp))
   , _tidp(tidp)
@@ -49,6 +50,7 @@ level_one_log_reader_impl::level_one_log_reader_impl(
   , _io(io_interface)
   , _probe(probe)
   , _cache(cache)
+  , _footer_cache(footer_cache)
   , _log(cd_log, fmt::format("[{}/{}/{}]", fmt::ptr(this), _ntp, _tidp)) {
     vlog(_log.debug, "New reader created {}", _config);
 }
@@ -307,6 +309,13 @@ level_one_log_reader_impl::lookup_object_for_offset(
 
 ss::future<l1::footer> level_one_log_reader_impl::read_footer(
   l1::object_id oid, size_t footer_pos, size_t object_size) {
+    if (_footer_cache) {
+        auto cached = _footer_cache->get(oid);
+        if (cached) {
+            co_return std::move(*cached);
+        }
+    }
+
     size_t footer_total_size = object_size - footer_pos;
     if (_probe != nullptr) {
         _probe->register_footer_read(footer_total_size);
@@ -373,7 +382,11 @@ ss::future<l1::footer> level_one_log_reader_impl::read_footer(
           object_size));
     }
 
-    co_return std::get<l1::footer>(std::move(footer_result));
+    auto footer = std::get<l1::footer>(std::move(footer_result));
+    if (_footer_cache) {
+        _footer_cache->put(oid, footer);
+    }
+    co_return footer;
 }
 
 ss::future<chunked_circular_buffer<model::record_batch>>

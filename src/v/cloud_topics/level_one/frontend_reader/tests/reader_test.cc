@@ -12,6 +12,7 @@
 #include "cloud_topics/level_one/common/fake_io.h"
 #include "cloud_topics/level_one/common/object.h"
 #include "cloud_topics/level_one/common/object_id.h"
+#include "cloud_topics/level_one/frontend_reader/l1_footer_cache.h"
 #include "cloud_topics/level_one/frontend_reader/l1_reader_cache.h"
 #include "cloud_topics/level_one/frontend_reader/level_one_reader.h"
 #include "cloud_topics/level_one/frontend_reader/tests/l1_reader_fixture.h"
@@ -907,4 +908,69 @@ TEST_P(l1_reader_test, lookahead_multiple_objects) {
     auto reader_no_prefetch = make_reader(ntp, tidp);
     auto result_no_prefetch = read_all(std::move(reader_no_prefetch));
     EXPECT_EQ(result_no_prefetch, expected);
+}
+
+// ---------------------------------------------------------------------------
+// Footer cache tests
+// ---------------------------------------------------------------------------
+
+class l1_footer_cache_test : public l1::l1_reader_fixture {};
+
+TEST_F(l1_footer_cache_test, populate_and_evict) {
+    auto [ntp, tidp] = make_ntidp("test_topic");
+
+    // Create 3 separate L1 objects with sequential offset ranges.
+    // Track OIDs in offset order by diffing list_objects after each creation.
+    auto batches1 = model::test::make_random_batches(model::offset{0}, 5).get();
+    auto off2 = batches1.back().last_offset() + model::offset{1};
+    auto batches2 = model::test::make_random_batches(off2, 5).get();
+    auto off3 = batches2.back().last_offset() + model::offset{1};
+    auto batches3 = model::test::make_random_batches(off3, 5).get();
+
+    std::vector<l1::object_id> oids_by_offset;
+
+    {
+        std::vector<tidp_batches_t> tb;
+        tb.emplace_back(tidp, std::move(batches1));
+        make_l1_objects(std::move(tb)).get();
+        auto all = _io.list_objects();
+        oids_by_offset.push_back(all[0]);
+    }
+    {
+        std::vector<tidp_batches_t> tb;
+        tb.emplace_back(tidp, std::move(batches2));
+        make_l1_objects(std::move(tb)).get();
+        auto all = _io.list_objects();
+        for (auto& oid : all) {
+            if (oid != oids_by_offset[0]) {
+                oids_by_offset.push_back(oid);
+            }
+        }
+    }
+    {
+        std::vector<tidp_batches_t> tb;
+        tb.emplace_back(tidp, std::move(batches3));
+        make_l1_objects(std::move(tb)).get();
+        auto all = _io.list_objects();
+        for (auto& oid : all) {
+            if (oid != oids_by_offset[0] && oid != oids_by_offset[1]) {
+                oids_by_offset.push_back(oid);
+            }
+        }
+    }
+
+    ASSERT_EQ(oids_by_offset.size(), 3);
+    ASSERT_EQ(_footer_cache.size(), 0);
+
+    // Read all 3 objects. The cache has capacity 2, so reading the third
+    // object evicts the first.
+    auto result = read_all(make_reader(ntp, tidp));
+    EXPECT_FALSE(result.empty());
+    EXPECT_EQ(_footer_cache.size(), 2);
+
+    // The two most recently read footers should be cached.
+    EXPECT_TRUE(_footer_cache.get(oids_by_offset[1]).has_value());
+    EXPECT_TRUE(_footer_cache.get(oids_by_offset[2]).has_value());
+    // The first object's footer should have been evicted.
+    EXPECT_FALSE(_footer_cache.get(oids_by_offset[0]).has_value());
 }

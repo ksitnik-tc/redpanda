@@ -105,6 +105,8 @@ ss::future<> app::construct(
       ss::sharded_parameter([&remote] { return std::ref(remote->local()); }),
       bucket);
 
+    co_await construct_service(l1_footer_cache_);
+
     co_await construct_service(l1_reader_cache_);
 
     co_await construct_service(
@@ -135,6 +137,7 @@ ss::future<> app::construct(
         [&metadata_cache] { return &metadata_cache->local(); }),
       ss::sharded_parameter([this] { return &_l1_reader_probe.local(); }),
       ss::sharded_parameter([this] { return &l1_reader_cache_.local(); }),
+      ss::sharded_parameter([this] { return &l1_footer_cache_.local(); }),
       ss::sharded_parameter([this] { return &rr_metadata_manager_.local(); }),
       ss::sharded_parameter([this] { return &rr_snapshot_manager_.local(); }));
 
