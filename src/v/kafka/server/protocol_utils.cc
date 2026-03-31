@@ -116,7 +116,8 @@ parse_header(ss::input_stream<char>& src) {
     co_return header;
 }
 
-ss::scattered_message<char> response_as_scattered(response_ptr response) {
+std::vector<ss::temporary_buffer<char>>
+response_as_scattered(response_ptr response) {
     /*
      * response header:
      *   - int32_t: size (correlation + response size)
@@ -140,24 +141,13 @@ ss::scattered_message<char> response_as_scattered(response_ptr response) {
 
     auto& buf = response->buf();
     buf.prepend(std::move(header));
-    ss::scattered_message<char> msg;
-    auto in = iobuf::iterator_consumer(buf.cbegin(), buf.cend());
-    int32_t chunk_no = 0;
-    in.consume(
-      buf.size_bytes(), [&msg, &chunk_no, &buf](const char* src, size_t sz) {
-          ++chunk_no;
-          vassert(
-            chunk_no <= std::numeric_limits<int16_t>::max(),
-            "Invalid construction of scattered_message. max count:{}. Usually "
-            "a bug with small append() to iobuf. {}",
-            chunk_no,
-            buf);
-          msg.append_static(src, sz);
-          return ss::stop_iteration::no;
-      });
-    // MUST be the foreign ptr not the iobuf
-    msg.on_delete([response = std::move(response)] {});
-    return msg;
+
+    std::vector<ss::temporary_buffer<char>> bufs;
+    bufs.reserve(std::distance(buf.begin(), buf.end()));
+    for (auto& frag : buf) {
+        bufs.push_back(frag.share());
+    }
+    return bufs;
 }
 
 } // namespace kafka

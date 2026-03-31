@@ -16,16 +16,18 @@
 #include "net/types.h"
 
 #include <seastar/core/iostream.hh>
-#include <seastar/core/scattered_message.hh>
+#include <seastar/core/temporary_buffer.hh>
 
 #include <optional>
+#include <vector>
 
 namespace kafka {
 
 // TODO: move to iobuf_parser
 ss::future<std::optional<request_header>> parse_header(ss::input_stream<char>&);
 
-ss::scattered_message<char> response_as_scattered(response_ptr response);
+std::vector<ss::temporary_buffer<char>>
+response_as_scattered(response_ptr response);
 
 class malformed_header_exception : public net::parsing_exception {
 public:
