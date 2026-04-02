@@ -99,16 +99,19 @@ struct produce_request_record_data {
         adapter.batch = std::move(batch);
     }
 
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "batch {{records: {}, size: {}}} v2_format {} valid_crc {}",
+          adapter.batch ? adapter.batch->header().record_count : -1,
+          adapter.batch ? adapter.batch->size_bytes() : -1,
+          adapter.v2_format,
+          adapter.valid_crc);
+    }
+
     friend std::ostream&
     operator<<(std::ostream& os, const produce_request_record_data& data) {
-        // NOTE: this stream is intentially devoid of user data.
-        fmt::print(
-          os,
-          "batch {{records: {}, size: {}}} v2_format {} valid_crc {}",
-          data.adapter.batch ? data.adapter.batch->header().record_count : -1,
-          data.adapter.batch ? data.adapter.batch->size_bytes() : -1,
-          data.adapter.v2_format,
-          data.adapter.valid_crc);
+        fmt::print(os, "{}", data);
         return os;
     }
     kafka_batch_adapter adapter;

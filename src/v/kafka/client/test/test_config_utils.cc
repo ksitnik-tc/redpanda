@@ -35,9 +35,12 @@
 namespace kafka::client {
 // BOOST_REQURE_EQUAL fails to find this if it's in the global namespace
 bool operator==(const configuration& lhs, const configuration& rhs) {
-    return fmt::format("{}", config::to_yaml(lhs, config::redact_secrets::no))
-           == fmt::format(
-             "{}", config::to_yaml(rhs, config::redact_secrets::no));
+    auto to_str = [](const configuration& c) {
+        std::stringstream ss;
+        ss << config::to_yaml(c, config::redact_secrets::no);
+        return ss.str();
+    };
+    return to_str(lhs) == to_str(rhs);
 }
 
 std::ostream& operator<<(std::ostream& os, const configuration& c) {

@@ -74,7 +74,8 @@ public:
                     sm::description(
                       "Client quota throttling delay per rule and "
                       "quota type (in seconds)"),
-                    {rule_label(rule), quota_type_label(quota_type)})
+                    {rule_label(to_string_view(rule)),
+                     quota_type_label(to_string_view(quota_type))})
                     .aggregate({sm::shard_label}));
                 metric_defs.emplace_back(
                   sm::make_histogram(
@@ -84,7 +85,8 @@ public:
                     },
                     sm::description(
                       "Client quota throughput per rule and quota type"),
-                    {rule_label(rule), quota_type_label(quota_type)})
+                    {rule_label(to_string_view(rule)),
+                     quota_type_label(to_string_view(quota_type))})
                     .aggregate({sm::shard_label}));
             }
         }

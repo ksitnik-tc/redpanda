@@ -13,6 +13,7 @@
 
 #include "absl/container/node_hash_map.h"
 #include "absl/hash/hash.h"
+#include "base/format_to.h"
 #include "container/chunked_vector.h"
 #include "kafka/client/assignment_plans.h"
 #include "kafka/client/brokers.h"
@@ -79,6 +80,8 @@ public:
     offset_commit(chunked_vector<offset_commit_request_topic> topics);
     ss::future<fetch_response>
     fetch(std::chrono::milliseconds timeout, std::optional<int32_t> max_bytes);
+
+    fmt::iterator format_to(fmt::iterator it) const;
 
 private:
     bool is_leader() const {
@@ -185,12 +188,9 @@ private:
     prefix_logger* _logger;
 
     friend std::ostream& operator<<(std::ostream& os, const consumer& c) {
-        fmt::print(
-          os,
-          "type={}, member_id={}, name={}",
-          c.is_leader() ? "leader" : "member",
-          c._member_id,
-          c._name);
+        fmt::memory_buffer buf;
+        c.format_to(fmt::appender(buf));
+        os.write(buf.data(), buf.size());
         return os;
     }
 };
@@ -239,3 +239,16 @@ struct consumer_eq {
 } // namespace detail
 
 } // namespace kafka::client
+
+template<>
+struct fmt::formatter<kafka::client::consumer> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    template<typename Ctx>
+    auto format(const kafka::client::consumer& v, Ctx& ctx) const {
+        fmt::memory_buffer buf;
+        v.format_to(fmt::appender(buf));
+        return std::copy(buf.begin(), buf.end(), ctx.out());
+    }
+};

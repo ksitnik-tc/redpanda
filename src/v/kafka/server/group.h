@@ -12,6 +12,7 @@
 #pragma once
 #include "absl/container/node_hash_map.h"
 #include "absl/container/node_hash_set.h"
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "cluster/fwd.h"
 #include "cluster/simple_batch_builder.h"
@@ -107,7 +108,21 @@ enum class group_state {
     dead,
 };
 
-std::ostream& operator<<(std::ostream&, group_state gs);
+constexpr std::string_view to_string_view(group_state gs) {
+    switch (gs) {
+    case group_state::empty:
+        return group_state_name_empty;
+    case group_state::preparing_rebalance:
+        return group_state_name_preparing_rebalance;
+    case group_state::completing_rebalance:
+        return group_state_name_completing_rebalance;
+    case group_state::stable:
+        return group_state_name_stable;
+    case group_state::dead:
+        return group_state_name_dead;
+    }
+    __builtin_unreachable();
+}
 
 ss::sstring group_state_to_kafka_name(group_state);
 std::optional<group_state> group_state_from_kafka_name(std::string_view);
@@ -222,7 +237,7 @@ public:
          */
         bool non_reclaimable{false};
 
-        friend std::ostream& operator<<(std::ostream&, const offset_metadata&);
+        fmt::iterator format_to(fmt::iterator it) const;
     };
 
     struct offset_metadata_with_probe {
@@ -728,6 +743,8 @@ public:
      *  If expired_only is true aborts only expired TXes.
      */
     ss::future<cluster::tx::errc> abort_txes(bool expired_only);
+
+    fmt::iterator format_to(fmt::iterator it) const;
 
 private:
     using member_map = absl::node_hash_map<kafka::member_id, member_ptr>;

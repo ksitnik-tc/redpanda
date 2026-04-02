@@ -165,8 +165,8 @@ redpanda_test_cc_library(
     deps = [
         "//src/v/base",
         "//src/v/model",
-        "@fmt",
         "//src/v/model:batch_compression",
+        "@fmt",
     ],
 )
 

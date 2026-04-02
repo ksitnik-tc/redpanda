@@ -10,6 +10,8 @@
  */
 #pragma once
 
+#include "base/format_to.h"
+
 #include <cstdint>
 #include <iosfwd>
 #include <string_view>
@@ -241,7 +243,6 @@ enum class error_code : int16_t {
     transactional_id_not_found = 105,
 };
 
-std::ostream& operator<<(std::ostream&, error_code);
 std::string_view error_code_to_str(error_code error);
 std::error_code make_error_code(error_code);
 const std::error_category& error_category() noexcept;
@@ -249,9 +250,30 @@ bool is_retriable(error_code);
 
 } // namespace kafka
 
+template<>
+struct fmt::formatter<kafka::error_code> {
+    constexpr auto parse(format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    format_context::iterator
+    format(kafka::error_code code, format_context& ctx) const {
+        return fmt::format_to(
+          ctx.out(),
+          "{{ error_code: {} [{}] }}",
+          kafka::error_code_to_str(code),
+          static_cast<int16_t>(code));
+    }
+};
+
 namespace std {
 
 template<>
 struct is_error_code_enum<kafka::error_code> : true_type {};
+
+// NOLINTNEXTLINE(*-dcl58-*)
+inline ostream& operator<<(ostream& o, kafka::error_code code) {
+    fmt::print(o, "{}", code);
+    return o;
+}
 
 } // namespace std

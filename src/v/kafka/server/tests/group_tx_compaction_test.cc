@@ -252,6 +252,9 @@ struct workload_parameters {
     }
 };
 
+template<>
+struct fmt::formatter<workload_parameters> : fmt::ostream_formatter {};
+
 random_ops generate_workload(workload_parameters params) {
     int group_id_counter = 0;
     auto next_group_id = [&] {
