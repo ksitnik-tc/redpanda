@@ -77,6 +77,11 @@ build --per_file_copt=.*\\.pb\\.cc@-Wno-deprecated-declarations
 build --per_file_copt=external/protobuf.*@-Wno-deprecated-declarations
 build --host_per_file_copt=external/protobuf.*@-Wno-deprecated-declarations
 
+# fmt 11 needs <cstdlib> for malloc/free but doesn't include it in
+# its headers. Force-include it globally.
+build --cxxopt=-include --cxxopt=cstdlib
+build --host_cxxopt=-include --host_cxxopt=cstdlib
+
 # -base configs generally aren't meant to be used directly but are
 # helpers to DRY later user-facing configs
 
