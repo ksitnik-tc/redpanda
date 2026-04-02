@@ -261,6 +261,11 @@ std::ostream& operator<<(std::ostream& os, role_errc code) {
     __builtin_unreachable();
 }
 
+} // namespace
+template<>
+struct fmt::formatter<role_errc> : fmt::ostream_formatter {};
+namespace {
+
 ss::http::reply::status_type role_errc_to_status(role_errc c) {
     return ss::http::reply::status_type{static_cast<int>(c) / 100};
 }

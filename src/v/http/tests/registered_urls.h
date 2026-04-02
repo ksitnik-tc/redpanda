@@ -17,6 +17,7 @@
 #include <seastar/http/httpd.hh>
 
 #include <boost/beast/http/field.hpp>
+#include <fmt/ostream.h>
 
 #include <iosfwd>
 
@@ -124,3 +125,6 @@ struct registered_urls {
     response lookup(const request_info&) const;
 };
 } // namespace http_test_utils
+
+template<>
+struct fmt::formatter<http_test_utils::response> : fmt::ostream_formatter {};

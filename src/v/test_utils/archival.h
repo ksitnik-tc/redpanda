@@ -18,6 +18,8 @@
 #include "storage/tests/utils/disk_log_builder.h"
 #include "test_utils/test_macros.h"
 
+#include <fmt/ostream.h>
+
 inline ss::input_stream<char> make_manifest_stream(std::string_view json) {
     iobuf i;
     i.append(json.data(), json.size());
@@ -68,6 +70,9 @@ struct segment_spec {
         return os;
     }
 };
+
+template<>
+struct fmt::formatter<segment_spec> : fmt::ostream_formatter {};
 
 inline void populate_local_log(
   storage::disk_log_builder& b, const std::vector<segment_spec>& segs) {

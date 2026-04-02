@@ -2927,7 +2927,7 @@ admin_server::get_decommission_progress_handler(
         f_details.ns = ntp.ns;
         f_details.topic = ntp.tp.topic;
         f_details.partition = ntp.tp.partition;
-        f_details.error = fmt::to_string(details.error);
+        f_details.error = fmt::format("{}", details.error);
 
         ret.reallocation_failure_details.push(f_details);
     }

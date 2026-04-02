@@ -387,7 +387,7 @@ struct fmt::formatter<http::client::request_header> {
     }
 
     template<typename FormatContext>
-    auto format(const http::client::request_header& h, FormatContext& ctx)
+    auto format(const http::client::request_header& h, FormatContext& ctx) const
       -> decltype(ctx.out()) {
         auto redacted = http::redacted_header(h);
         std::stringstream s;
@@ -398,26 +398,13 @@ struct fmt::formatter<http::client::request_header> {
 
 template<>
 struct fmt::formatter<http::client::response_header> {
-    char presentation = 'u'; // 'u' for unchanged, 'l' for one line
-    constexpr auto parse(format_parse_context& ctx) {
-        auto it = ctx.begin();
-        auto end = ctx.end();
-        if (it != end && (*it == 'l' || *it == 'u')) presentation = *it++;
-        if (it != end && *it != '}') throw format_error("invalid format");
-        return it;
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
     }
 
-    auto format(http::client::response_header& h, auto& ctx) const {
-        if (presentation == 'u') {
-            std::stringstream s;
-            s << h;
-            return fmt::format_to(ctx.out(), "{}", s.str());
-        }
-        // format one line
-        auto out = ctx.out();
-        for (auto& f : h) {
-            out = fmt::format_to(out, "[{}: {}];", f.name_string(), f.value());
-        }
-        return out;
+    auto format(const http::client::response_header& h, auto& ctx) const {
+        std::stringstream s;
+        s << h;
+        return fmt::format_to(ctx.out(), "{}", s.str());
     }
 };
