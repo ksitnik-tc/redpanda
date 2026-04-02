@@ -290,7 +290,7 @@ struct offset_stats {
     model::offset dirty_offset;
     model::term_id dirty_offset_term;
 
-    friend std::ostream& operator<<(std::ostream&, const offset_stats&);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 struct log_append_config {
@@ -305,7 +305,7 @@ struct append_result {
     size_t byte_size;
     model::term_id last_term;
 
-    friend std::ostream& operator<<(std::ostream& o, const append_result&);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 /// A timequery configuration specifies the range of offsets to search for a
@@ -331,6 +331,7 @@ struct timequery_config {
     model::opt_abort_source_t abort_source;
     model::opt_client_address_t client_address;
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream& operator<<(std::ostream& o, const timequery_config&);
 };
 struct timequery_result {
@@ -354,7 +355,8 @@ struct truncate_config {
       : base_offset(o) {}
     // Lowest offset to remove.
     model::offset base_offset;
-    friend std::ostream& operator<<(std::ostream&, const truncate_config&);
+
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 /**
@@ -529,7 +531,7 @@ struct gc_config {
     // remove one segment if log is > max_bytes
     std::optional<size_t> max_bytes;
 
-    friend std::ostream& operator<<(std::ostream&, const gc_config&);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 /*
@@ -594,7 +596,7 @@ struct housekeeping_config {
         return cfg;
     }
 
-    friend std::ostream& operator<<(std::ostream&, const housekeeping_config&);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 struct compaction_result {
@@ -624,7 +626,8 @@ struct compaction_result {
     size_t size_after;
     // The size of the new compacted index, if one was made.
     std::optional<size_t> cmp_idx_size_after{std::nullopt};
-    friend std::ostream& operator<<(std::ostream&, const compaction_result&);
+
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 /*

@@ -8,6 +8,7 @@
 // by the Apache License, Version 2.0
 #pragma once
 
+#include "base/format_to.h"
 #include "bytes/iobuf.h"
 #include "model/fundamental.h"
 
@@ -19,14 +20,20 @@ enum class entry_type : int8_t {
     record_batch = 0,
     max = record_batch,
 };
-std::ostream& operator<<(std::ostream&, entry_type);
+inline constexpr std::string_view to_string_view(entry_type t) {
+    switch (t) {
+    case entry_type::record_batch:
+        return "record_batch";
+    }
+    __builtin_unreachable();
+}
 
 struct entry_header {
     uint32_t header_crc;
     int32_t body_size;
     entry_type type;
 
-    friend std::ostream& operator<<(std::ostream&, const entry_header&);
+    fmt::iterator format_to(fmt::iterator it) const;
     bool operator==(const entry_header& other) const = default;
 };
 

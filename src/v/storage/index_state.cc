@@ -169,13 +169,17 @@ void index_columns::pop_back(int n) {
     _position_index.pop_back_n(n);
 }
 
-std::ostream& operator<<(std::ostream& o, const index_columns& s) {
-    fmt::print(
-      o,
+fmt::iterator index_columns::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
       "index({}, {}, {})",
-      s._relative_offset_index.size(),
-      s._relative_time_index.size(),
-      s._position_index.size());
+      _relative_offset_index.size(),
+      _relative_time_index.size(),
+      _position_index.size());
+}
+
+std::ostream& operator<<(std::ostream& o, const index_columns& s) {
+    fmt::print(o, "{}", s);
     return o;
 }
 
@@ -218,8 +222,8 @@ index_state index_state::make_empty_index(
 }
 
 std::ostream& operator<<(std::ostream& o, const index_state::entry& e) {
-    return o << "{offset:" << e.offset << ", time:" << e.timestamp
-             << ", filepos:" << e.filepos << "}";
+    fmt::print(o, "{}", e);
+    return o;
 }
 
 bool index_state::maybe_index(
@@ -332,27 +336,38 @@ bool index_state::maybe_index(
     return false;
 }
 
+fmt::iterator index_state::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
+      "{{header_bitflags:{}, base_offset:{}, max_offset:{}, "
+      "base_timestamp:{}, max_timestamp:{}, "
+      "batch_timestamps_are_monotonic:{}, with_offset:{}, "
+      "non_data_timestamps:{}, broker_timestamp:{}, "
+      "num_compactible_records_appended:{}, clean_compact_timestamp:{}, "
+      "may_have_tombstone_records:{}, self_compact_timestamp:{}, "
+      "may_have_transaction_control_batches:{}, "
+      "may_have_transaction_data_or_fence_batches:{}, {}}}",
+      bitflags,
+      base_offset,
+      max_offset,
+      base_timestamp,
+      max_timestamp,
+      batch_timestamps_are_monotonic,
+      with_offset,
+      non_data_timestamps,
+      broker_timestamp,
+      num_compactible_records_appended,
+      clean_compact_timestamp,
+      may_have_tombstone_records,
+      self_compact_timestamp,
+      may_have_transaction_control_batches,
+      may_have_transaction_data_or_fence_batches,
+      index);
+}
+
 std::ostream& operator<<(std::ostream& o, const index_state& s) {
-    return o << "{header_bitflags:" << s.bitflags
-             << ", base_offset:" << s.base_offset
-             << ", max_offset:" << s.max_offset
-             << ", base_timestamp:" << s.base_timestamp
-             << ", max_timestamp:" << s.max_timestamp
-             << ", batch_timestamps_are_monotonic:"
-             << s.batch_timestamps_are_monotonic
-             << ", with_offset:" << s.with_offset
-             << ", non_data_timestamps:" << s.non_data_timestamps
-             << ", broker_timestamp:" << s.broker_timestamp
-             << ", num_compactible_records_appended:"
-             << s.num_compactible_records_appended
-             << ", clean_compact_timestamp:" << s.clean_compact_timestamp
-             << ", may_have_tombstone_records:" << s.may_have_tombstone_records
-             << ", self_compact_timestamp:" << s.self_compact_timestamp
-             << ", may_have_transaction_control_batches:"
-             << s.may_have_transaction_control_batches
-             << ", may_have_transaction_data_or_fence_batches:"
-             << s.may_have_transaction_data_or_fence_batches << ", " << s.index
-             << "}";
+    fmt::print(o, "{}", s);
+    return o;
 }
 
 void index_state::serde_write(iobuf& out) const {

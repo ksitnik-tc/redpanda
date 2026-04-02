@@ -12,6 +12,7 @@
 #pragma once
 
 #include "absl/container/flat_hash_map.h"
+#include "base/format_to.h"
 #include "json/document.h"
 #include "model/fundamental.h"
 #include "model/record_batch_types.h"
@@ -95,7 +96,23 @@ constexpr std::string_view failure_injector_schema = R"(
 )";
 
 enum class failable_op_type : uint8_t { write, falloc, truncate, flush, close };
-std::ostream& operator<<(std::ostream& o, failable_op_type op);
+
+constexpr std::string_view to_string_view(failable_op_type op) {
+    switch (op) {
+    case failable_op_type::write:
+        return "write";
+    case failable_op_type::falloc:
+        return "falloc";
+    case failable_op_type::truncate:
+        return "truncate";
+    case failable_op_type::flush:
+        return "flush";
+    case failable_op_type::close:
+        return "close";
+    }
+    return "unknown";
+}
+
 std::istream& operator>>(std::istream& o, failable_op_type op);
 
 struct failable_op_config {
@@ -117,9 +134,15 @@ struct ntp_failure_injection_config {
 struct ntp_sanitizer_config {
     bool sanitize_only;
     std::optional<ntp_failure_injection_config> finjection_cfg;
-};
 
-std::ostream& operator<<(std::ostream& o, const ntp_sanitizer_config& cfg);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "{{sanitize_only={}, failure_injection={}}}",
+          sanitize_only,
+          static_cast<bool>(finjection_cfg));
+    }
+};
 
 // Held by log manager
 class file_sanitize_config {
@@ -130,8 +153,13 @@ public:
     std::optional<ntp_sanitizer_config>
     get_config_for_ntp(const model::ntp&) const;
 
-    friend std::ostream&
-    operator<<(std::ostream& o, const file_sanitize_config& cfg);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "{{sanitize_only={}, ntps_with_failure_injection_count: {}}}",
+          _sanitize_only,
+          _ntp_failure_configs.size());
+    }
 
 private:
     bool _sanitize_only{false};

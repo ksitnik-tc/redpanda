@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "base/format_to.h"
+
 #include <system_error>
 
 namespace storage {
@@ -58,8 +60,23 @@ inline std::error_code make_error_code(parser_errc e) noexcept {
     return std::error_code(static_cast<int>(e), error_category());
 }
 
-inline std::ostream& operator<<(std::ostream& os, parser_errc err) {
-    return os << to_string(err);
+inline constexpr std::string_view to_string_view(parser_errc err) {
+    switch (err) {
+    case parser_errc::none:
+        return "storage::parser_errc::success";
+    case parser_errc::end_of_stream:
+        return "parser_errc::end_of_stream";
+    case parser_errc::header_only_crc_missmatch:
+        return "parser_errc::header_only_crc_missmatch";
+    case parser_errc::input_stream_not_enough_bytes:
+        return "parser_errc::input_stream_not_enough_bytes";
+    case parser_errc::fallocated_file_read_zero_bytes_for_header:
+        return "parser_errc::fallocated_file_read_zero_bytes_for_header";
+    case parser_errc::not_enough_bytes_in_parser_for_one_record:
+        return "parser_errc::not_enough_bytes_in_parser_for_one_record";
+    default:
+        return "storage::parser_errc::unknown";
+    }
 }
 
 } // namespace storage

@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "bytes/iobuf.h"
 #include "container/chunked_vector.h"
 #include "model/fundamental.h"
@@ -76,6 +77,7 @@ public:
     friend bool
     operator==(const index_columns&, const index_columns&) = default;
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream& operator<<(std::ostream&, const index_columns&);
 
 private:
@@ -150,7 +152,15 @@ struct index_state
         model::offset offset;
         model::timestamp timestamp;
         size_t filepos;
-        friend std::ostream& operator<<(std::ostream&, const entry&);
+
+        fmt::iterator format_to(fmt::iterator it) const {
+            return fmt::format_to(
+              it,
+              "{{offset:{}, time:{}, filepos:{}}}",
+              offset,
+              timestamp,
+              filepos);
+        }
     };
 
     index_state() = default;
@@ -277,6 +287,7 @@ struct index_state
 
     friend bool operator==(const index_state&, const index_state&) = default;
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream& operator<<(std::ostream&, const index_state&);
 
     void serde_write(iobuf&) const;

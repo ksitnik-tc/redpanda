@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 
 #include <seastar/core/sstring.hh>
@@ -24,6 +25,14 @@ namespace storage {
 
 enum class record_version_type { v1 };
 
+inline constexpr std::string_view to_string_view(record_version_type version) {
+    switch (version) {
+    case record_version_type::v1:
+        return "v1";
+    }
+    __builtin_unreachable();
+}
+
 inline record_version_type from_string(std::string_view version) {
     if (version == "v1") {
         return record_version_type::v1;
@@ -33,15 +42,7 @@ inline record_version_type from_string(std::string_view version) {
 }
 
 inline ss::sstring to_string(record_version_type version) {
-    switch (version) {
-    case record_version_type::v1:
-        return "v1";
-    }
-    throw std::runtime_error("Wrong record version");
-}
-
-inline std::ostream& operator<<(std::ostream& o, record_version_type v) {
-    return o << to_string(v);
+    return ss::sstring(to_string_view(version));
 }
 
 } // namespace storage

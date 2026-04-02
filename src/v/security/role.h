@@ -149,6 +149,28 @@ private:
     container_type _members;
 };
 
+} // namespace security
+
+/// role has begin()/end() so fmt sees it as a range. Disable that and provide
+/// an explicit formatter that delegates to the format_to member.
+template<>
+struct fmt::range_format_kind<security::role, char>
+  : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
+
+template<>
+struct fmt::formatter<security::role> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    template<typename FormatContext>
+    auto format(const security::role& v, FormatContext& ctx) const {
+        fmt::memory_buffer buf;
+        v.format_to(fmt::appender(buf));
+        return std::copy(buf.begin(), buf.end(), ctx.out());
+    }
+};
+
+namespace security {
 /**
  * Require that some type 'T' provide the role_member{_view} interface.
  */
