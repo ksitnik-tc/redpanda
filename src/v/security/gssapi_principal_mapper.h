@@ -37,8 +37,6 @@ public:
 private:
     friend struct fmt::formatter<gssapi_name>;
 
-    friend std::ostream& operator<<(std::ostream& os, const gssapi_name& n);
-
     ss::sstring _primary;
     ss::sstring _host_name;
     ss::sstring _realm;
@@ -59,9 +57,6 @@ public:
 
 private:
     friend struct fmt::formatter<gssapi_principal_mapper>;
-
-    friend std::ostream&
-    operator<<(std::ostream& os, const gssapi_principal_mapper& p);
 
     config::binding<std::vector<ss::sstring>> _principal_to_local_rules_binding;
     std::vector<gssapi_rule> _rules;

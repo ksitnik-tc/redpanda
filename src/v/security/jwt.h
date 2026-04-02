@@ -28,6 +28,7 @@
 #include <seastar/util/variant_utils.hh>
 
 #include <boost/algorithm/string/split.hpp>
+#include <fmt/ostream.h>
 
 #include <algorithm>
 #include <iosfwd>
@@ -616,3 +617,6 @@ private:
 };
 
 } // namespace security::oidc
+
+template<>
+struct fmt::formatter<security::oidc::jwt> : fmt::ostream_formatter {};

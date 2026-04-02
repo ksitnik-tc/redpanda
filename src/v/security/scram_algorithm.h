@@ -9,7 +9,9 @@
  * by the Apache License, Version 2.0
  */
 #pragma once
+
 #include "absl/container/node_hash_map.h"
+#include "base/format_to.h"
 #include "bytes/bytes.h"
 #include "bytes/random.h"
 #include "hashing/secure.h"
@@ -74,6 +76,10 @@ public:
     }
 
     bool token_authenticated() const;
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{client_first_message}}");
+    }
 
 private:
     friend std::ostream& operator<<(std::ostream&, const client_first_message&);
@@ -146,6 +152,10 @@ public:
 
     ss::sstring message() const {
         return ssx::sformat("{},p={}", msg_no_proof(), bytes_to_base64(_proof));
+    }
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{client_final_message}}");
     }
 
 private:

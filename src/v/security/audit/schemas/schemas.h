@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "config/node_config.h"
 #include "reflection/type_traits.h"
 #include "security/audit/schemas/types.h"
@@ -55,6 +56,8 @@ public:
     virtual category_uid get_category_uid() const = 0;
     virtual class_uid get_class_uid() const = 0;
     virtual type_uid get_type_uid() const = 0;
+
+    fmt::iterator format_to(fmt::iterator it) const;
 
 private:
     friend std::ostream& operator<<(std::ostream&, const ocsf_base_impl&);
@@ -218,3 +221,18 @@ private:
     }
 };
 } // namespace security::audit
+
+template<>
+struct fmt::formatter<std::unique_ptr<security::audit::ocsf_base_impl>> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    auto format(
+      const std::unique_ptr<security::audit::ocsf_base_impl>& v,
+      fmt::format_context& ctx) const {
+        if (v) {
+            return fmt::format_to(ctx.out(), "{}", *v);
+        }
+        return fmt::format_to(ctx.out(), "{{nullptr}}");
+    }
+};

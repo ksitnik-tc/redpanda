@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 
 #include <seastar/core/sstring.hh>
@@ -57,7 +58,6 @@ static constexpr auto acceptable_nested_group_behavior_values() {
        to_string_view(nested_group_behavior::suffix)});
 }
 
-std::ostream& operator<<(std::ostream& os, nested_group_behavior b);
 std::istream& operator>>(std::istream& is, nested_group_behavior& b);
 
 std::optional<ss::sstring>

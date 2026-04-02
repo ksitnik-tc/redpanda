@@ -101,8 +101,6 @@ private:
     friend struct fmt::formatter<license>;
 
     friend bool operator==(const license& a, const license& b) = default;
-
-    friend std::ostream& operator<<(std::ostream& os, const license& lic);
 };
 
 /// Returns a license or an exception indicating the reason why the method

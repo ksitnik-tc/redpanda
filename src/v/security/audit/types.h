@@ -8,6 +8,7 @@
  * https://github.com/redpanda-data/redpanda/blob/master/licenses/rcl.md
  */
 #pragma once
+#include "base/format_to.h"
 #include "strings/string_switch.h"
 
 #include <string_view>
@@ -27,7 +28,31 @@ enum class event_type : std::uint8_t {
     num_elements
 };
 
-std::ostream& operator<<(std::ostream&, event_type);
+constexpr std::string_view to_string_view(event_type t) {
+    switch (t) {
+    case event_type::management:
+        return "management";
+    case event_type::produce:
+        return "produce";
+    case event_type::consume:
+        return "consume";
+    case event_type::describe:
+        return "describe";
+    case event_type::heartbeat:
+        return "heartbeat";
+    case event_type::authenticate:
+        return "authenticate";
+    case event_type::admin:
+        return "admin";
+    case event_type::schema_registry:
+        return "schema_registry";
+    case event_type::unknown:
+        return "unknown";
+    case event_type::num_elements:
+        return "invalid";
+    }
+    return "invalid";
+}
 
 inline event_type string_to_event_type(const std::string_view s) {
     return string_switch<event_type>(s)

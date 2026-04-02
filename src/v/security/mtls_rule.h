@@ -41,8 +41,6 @@ public:
 private:
     friend struct fmt::formatter<rule>;
 
-    friend std::ostream& operator<<(std::ostream& os, const rule& r);
-
     std::regex _regex;
     std::optional<ss::sstring> _pattern;
     std::optional<ss::sstring> _replacement;

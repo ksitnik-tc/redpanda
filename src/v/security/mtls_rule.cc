@@ -38,11 +38,6 @@ rule::rule(
   , _to_lower{to_lower}
   , _to_upper{to_upper} {}
 
-std::ostream& operator<<(std::ostream& os, const rule& r) {
-    fmt::print(os, "{}", r);
-    return os;
-}
-
 } // namespace security::tls
 
 template<>

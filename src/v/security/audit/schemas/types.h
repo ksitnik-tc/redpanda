@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "container/chunked_vector.h"
 #include "container/json.h"
@@ -47,7 +48,23 @@ enum class category_uid : uint8_t {
     application_activity = 6
 };
 
-std::ostream& operator<<(std::ostream&, const category_uid&);
+constexpr std::string_view to_string_view(category_uid uid) {
+    switch (uid) {
+    case category_uid::system_activity:
+        return "system_activity";
+    case category_uid::findings:
+        return "findings";
+    case category_uid::iam:
+        return "iam";
+    case category_uid::network_activity:
+        return "network_activity";
+    case category_uid::discovery:
+        return "discovery";
+    case category_uid::application_activity:
+        return "application_activity";
+    }
+    __builtin_unreachable();
+}
 
 // Defines the class of the event
 // https://schema.ocsf.io/
@@ -86,7 +103,75 @@ enum class class_uid : uint16_t {
     web_resource_access_activity = 6004
 };
 
-std::ostream& operator<<(std::ostream&, const class_uid&);
+constexpr std::string_view to_string_view(class_uid uid) {
+    switch (uid) {
+    case class_uid::file_system_activity:
+        return "file_system_activity";
+    case class_uid::kernel_extension_activity:
+        return "kernel_extension_activity";
+    case class_uid::kernel_activity:
+        return "kernel_activity";
+    case class_uid::memory_activity:
+        return "memory_activity";
+    case class_uid::module_activity:
+        return "module_activity";
+    case class_uid::scheduled_job_activity:
+        return "scheduled_job_activity";
+    case class_uid::process_activity:
+        return "process_activity";
+    case class_uid::security_finding:
+        return "security_finding";
+    case class_uid::account_change:
+        return "account_change";
+    case class_uid::authentication:
+        return "authentication";
+    case class_uid::authorize_session:
+        return "authorize_session";
+    case class_uid::entity_management:
+        return "entity_management";
+    case class_uid::user_access_management:
+        return "user_access_management";
+    case class_uid::group_management:
+        return "group_management";
+    case class_uid::network_activity:
+        return "network_activity";
+    case class_uid::http_activity:
+        return "http_activity";
+    case class_uid::dns_activity:
+        return "dns_activity";
+    case class_uid::dhcp_activity:
+        return "dhcp_activity";
+    case class_uid::rdp_activity:
+        return "rdp_activity";
+    case class_uid::smb_activity:
+        return "smb_activity";
+    case class_uid::ssh_activity:
+        return "ssh_activity";
+    case class_uid::ftp_activity:
+        return "ftp_activity";
+    case class_uid::email_activity:
+        return "email_activity";
+    case class_uid::network_file_activity:
+        return "network_file_activity";
+    case class_uid::email_file_activity:
+        return "email_file_activity";
+    case class_uid::email_url_activity:
+        return "email_url_activity";
+    case class_uid::device_inventory_info:
+        return "device_inventory_info";
+    case class_uid::device_config_state:
+        return "device_config_state";
+    case class_uid::web_resource_activity:
+        return "web_resource_activity";
+    case class_uid::application_lifecycle:
+        return "application_lifecycle";
+    case class_uid::api_activity:
+        return "api_activity";
+    case class_uid::web_resource_access_activity:
+        return "web_resource_access_activity";
+    }
+    __builtin_unreachable();
+}
 
 // Severity of the event
 // Each class defines the same severity fields

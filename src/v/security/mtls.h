@@ -36,9 +36,6 @@ public:
 private:
     friend struct fmt::formatter<principal_mapper>;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const principal_mapper& p);
-
     config::binding<std::optional<std::vector<ss::sstring>>> _binding;
     std::vector<rule> _rules;
 };
