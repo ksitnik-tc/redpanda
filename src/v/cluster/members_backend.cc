@@ -1,5 +1,6 @@
 #include "cluster/members_backend.h"
 
+#include "base/format_to.h"
 #include "cluster/controller_api.h"
 #include "cluster/errc.h"
 #include "cluster/fwd.h"
@@ -18,6 +19,7 @@
 #include "model/namespace.h"
 #include "model/timeout_clock.h"
 #include "random/generators.h"
+#include "utils/to_string.h"
 
 #include <seastar/core/coroutine.hh>
 #include <seastar/util/log.hh>
@@ -578,12 +580,12 @@ ss::future<> members_backend::reconcile_reallocation_state(
           clusterlog.info,
           "[ntp: {}, {} -> {}] reconciliation state: {}, pending "
           "operations: "
-          "{}",
+          "[{}]",
           ntp,
           meta.current_replica_set,
           meta.new_replica_set,
           reconciliation_state.status(),
-          reconciliation_state.pending_operations());
+          fmt::join(reconciliation_state.pending_operations(), ", "));
         if (reconciliation_state.status() != reconciliation_status::done) {
             co_return;
         }
@@ -738,26 +740,23 @@ ss::future<std::error_code> members_backend::remove_from_raft0(
     co_return co_await _raft0->remove_member(
       raft::vnode(id, raft0_revision), revision);
 }
-
-std::ostream&
-operator<<(std::ostream& o, const members_backend::partition_reallocation& r) {
-    fmt::print(
-      o,
+fmt::iterator
+members_backend::partition_reallocation::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
       "{{current: {}, new: {}, state: {}}}",
-      r.current_replica_set,
-      r.new_replica_set,
-      r.state);
-    return o;
+      current_replica_set,
+      new_replica_set,
+      state);
 }
-std::ostream&
-operator<<(std::ostream& o, const members_backend::cancellation_state& state) {
-    switch (state) {
+std::string_view to_string_view(members_backend::cancellation_state e) {
+    switch (e) {
     case members_backend::cancellation_state::request_cancel:
-        return o << "request_cancel";
+        return "request_cancel";
     case members_backend::cancellation_state::cancelled:
-        return o << "cancelled";
+        return "cancelled";
     case members_backend::cancellation_state::finished:
-        return o << "finished";
+        return "finished";
     }
 
     __builtin_unreachable();

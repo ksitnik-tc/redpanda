@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "cloud_storage/fwd.h"
 #include "cluster/archival/archival_metadata_stm.h"
 #include "cluster/archival/fwd.h"
@@ -467,7 +468,7 @@ private:
 
     bool _started{false};
 
-    friend std::ostream& operator<<(std::ostream& o, const partition& x);
+    friend std::ostream& operator<<(std::ostream&, const partition&);
 };
 } // namespace cluster
 namespace std {
@@ -478,3 +479,6 @@ struct hash<cluster::partition> {
     }
 };
 } // namespace std
+
+template<>
+struct fmt::formatter<cluster::partition> : fmt::ostream_formatter {};

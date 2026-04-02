@@ -12,6 +12,9 @@
  */
 
 #pragma once
+#include "base/format_to.h"
+
+#include <string_view>
 #include <system_error>
 
 namespace cluster::tx {
@@ -57,7 +60,7 @@ enum class errc {
     partition_writes_locked
 };
 
-std::ostream& operator<<(std::ostream& o, errc err);
+std::string_view to_string_view(errc err);
 
 struct errc_category final : public std::error_category {
     const char* name() const noexcept final { return "cluster::tx::errc"; }

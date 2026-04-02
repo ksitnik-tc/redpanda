@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include "base/format_to.h"
 #include "cloud_io/cache_service.h"
 #include "cloud_storage/fwd.h"
 #include "cloud_storage/partition_manifest.h"
@@ -48,7 +49,7 @@ using namespace std::chrono_literals;
 
 enum class segment_upload_kind { compacted, non_compacted };
 
-std::ostream& operator<<(std::ostream& os, segment_upload_kind upload_kind);
+std::string_view to_string_view(segment_upload_kind upload_kind);
 
 class ntp_archiver_upload_result {
 public:
@@ -97,23 +98,23 @@ private:
 // re-dispatched to the partition leader by caller.
 enum class flush_response { rejected, accepted };
 
-std::ostream& operator<<(std::ostream& os, flush_response fr);
+std::string_view to_string_view(flush_response fr);
 
 struct flush_result {
     flush_response response;
     // The inclusive offset which the archiver will flush() to, if response is
     // accepted.
     std::optional<model::offset> offset;
-};
 
-std::ostream& operator<<(std::ostream& os, flush_result fr);
+    fmt::iterator format_to(fmt::iterator it) const;
+};
 
 // Indicates whether a flush is still in progress, if it is complete, or if
 // the flush needs to be retried (in case of a leadership change during
 // flush())
 enum class wait_result { not_in_progress, complete, lost_leadership, failed };
 
-std::ostream& operator<<(std::ostream& os, wait_result wr);
+std::string_view to_string_view(wait_result wr);
 
 /// Fence value for the archival STM.
 /// The value is used to implement optimistic

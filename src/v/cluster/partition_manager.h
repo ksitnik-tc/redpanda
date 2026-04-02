@@ -12,6 +12,7 @@
 #pragma once
 
 #include "absl/container/flat_hash_map.h"
+#include "base/format_to.h"
 #include "cloud_storage/fwd.h"
 #include "cloud_storage/remote_path_provider.h"
 #include "cloud_storage/types.h"
@@ -30,6 +31,8 @@
 #include "model/metadata.h"
 #include "raft/group_manager.h"
 #include "storage/api.h"
+
+#include <fmt/ostream.h>
 
 #include <chrono>
 
@@ -220,6 +223,8 @@ public:
         _stm_registry.register_factory<T>(std::forward<Args>(args)...);
     }
 
+    fmt::iterator format_to(fmt::iterator it) const;
+
 private:
     enum class partition_shutdown_stage {
         shutdown_requested,
@@ -312,8 +317,24 @@ private:
     // The sharded app may not be initialized if cloud topics isn't enabled.
     ss::sharded<cloud_topics::state_accessors>* _cloud_topics_state;
 
+    static std::string_view to_string_view(partition_shutdown_stage stage);
+
     friend std::ostream& operator<<(std::ostream&, const partition_manager&);
     friend std::ostream& operator<<(
       std::ostream&, const partition_manager::partition_shutdown_stage&);
+    friend struct fmt::formatter<partition_shutdown_stage>;
 };
 } // namespace cluster
+
+template<>
+struct fmt::formatter<cluster::partition_manager::partition_shutdown_stage> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    auto format(
+      cluster::partition_manager::partition_shutdown_stage s,
+      fmt::format_context& ctx) const {
+        return fmt::format_to(
+          ctx.out(), "{}", cluster::partition_manager::to_string_view(s));
+    }
+};

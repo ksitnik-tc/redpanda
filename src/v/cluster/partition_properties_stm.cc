@@ -367,24 +367,44 @@ void partition_properties_stm_factory::create(
     raft->log()->stm_hookset()->add_stm(stm);
 }
 
+fmt::iterator
+partition_properties_stm::raft_snapshot::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
+      "{{writes_disabled: {}, writes_revision_id: {}}}",
+      writes_disabled,
+      writes_revision_id);
+}
+
+fmt::iterator partition_properties_stm::update_writes_disabled_cmd::format_to(
+  fmt::iterator it) const {
+    return fmt::format_to(
+      it,
+      "{{writes_disabled: {}, writes_revision_id: {}}}",
+      writes_disabled,
+      writes_revision_id);
+}
+
+fmt::iterator
+partition_properties_stm::state_snapshot::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
+      "{{update_offset: {}, writes_disabled: {}, writes_revision_id: {}}}",
+      update_offset,
+      writes_disabled,
+      writes_revision_id);
+}
+
 std::ostream& operator<<(
   std::ostream& o, const partition_properties_stm::raft_snapshot& snap) {
-    fmt::print(
-      o,
-      "{{writes_disabled: {}, writes_revision_id: {}}}",
-      snap.writes_disabled,
-      snap.writes_revision_id);
+    fmt::print(o, "{}", snap);
     return o;
 }
 
 std::ostream& operator<<(
   std::ostream& o,
   const partition_properties_stm::update_writes_disabled_cmd& update) {
-    fmt::print(
-      o,
-      "{{writes_disabled: {}, writes_revision_id: {}}}",
-      update.writes_disabled,
-      update.writes_revision_id);
+    fmt::print(o, "{}", update);
     return o;
 }
 
@@ -396,12 +416,7 @@ std::ostream& operator<<(
 
 std::ostream& operator<<(
   std::ostream& o, const partition_properties_stm::state_snapshot& update) {
-    fmt::print(
-      o,
-      "{{update_offset: {}, writes_disabled: {}, writes_revision_id: {}}}",
-      update.update_offset,
-      update.writes_disabled,
-      update.writes_revision_id);
+    fmt::print(o, "{}", update);
     return o;
 }
 

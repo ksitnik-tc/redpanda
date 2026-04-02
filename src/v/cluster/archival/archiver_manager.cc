@@ -10,6 +10,7 @@
 
 #include "cluster/archival/archiver_manager.h"
 
+#include "base/format_to.h"
 #include "cloud_io/cache_service.h"
 #include "cluster/archival/logger.h"
 #include "cluster/archival/ntp_archiver_service.h"
@@ -37,7 +38,6 @@
 #include <boost/msm/front/functor_row.hpp>
 #include <boost/msm/front/state_machine_def.hpp>
 #include <fmt/format.h>
-#include <fmt/ostream.h>
 
 #include <exception>
 #include <optional>
@@ -94,21 +94,20 @@ enum class managed_partition_event_t {
     // Shutdown initiated
     shutdown,
 };
-
-std::ostream& operator<<(std::ostream& o, managed_partition_event_t e) {
+std::string_view to_string_view(managed_partition_event_t e) {
     switch (e) {
     case managed_partition_event_t::leadership_acquired:
-        return o << "leadership_acquired";
+        return "leadership_acquired";
     case managed_partition_event_t::leadership_lost:
-        return o << "leadership_lost";
+        return "leadership_lost";
     case managed_partition_event_t::archiver_started:
-        return o << "archiver_started";
+        return "archiver_started";
     case managed_partition_event_t::archiver_failure:
-        return o << "archiver_failure";
+        return "archiver_failure";
     case managed_partition_event_t::archiver_stopped:
-        return o << "archiver_stopped";
+        return "archiver_stopped";
     case managed_partition_event_t::shutdown:
-        return o << "shutdown";
+        return "shutdown";
     }
 }
 
@@ -117,18 +116,6 @@ std::ostream& operator<<(std::ostream& o, managed_partition_event_t e) {
 template<managed_partition_event_t event, class Derived>
 struct managed_partition_event_base : auto_fmt<Derived> {};
 } // namespace archival
-
-/// Automagically prints any event object derived from
-/// managed_partition_event_base
-template<archival::managed_partition_event_t id, class Derived>
-struct fmt::formatter<archival::managed_partition_event_base<id, Derived>> {
-    template<typename FormatContext>
-    auto format(
-      const archival::managed_partition_event_base<id, Derived>& event,
-      FormatContext& ctx) const -> decltype(ctx.out()) {
-        return fmt::format_to(ctx.out(), "[{}..{}]", id, event);
-    }
-};
 
 namespace archival {
 std::ostream&
@@ -143,17 +130,16 @@ enum class managed_partition_state_t {
     active,
     stopping,
 };
-
-std::ostream& operator<<(std::ostream& o, managed_partition_state_t s) {
-    switch (s) {
+std::string_view to_string_view(managed_partition_state_t e) {
+    switch (e) {
     case managed_partition_state_t::passive:
-        return o << "passive";
+        return "passive";
     case managed_partition_state_t::active:
-        return o << "active";
+        return "active";
     case managed_partition_state_t::starting:
-        return o << "starting";
+        return "starting";
     case managed_partition_state_t::stopping:
-        return o << "stopping";
+        return "stopping";
     }
 }
 
@@ -243,12 +229,20 @@ public:
 
         template<class T>
         void on_entry(const T& event, state_machine_t& fsm) {
-            vlog(fsm._ctxlog.debug, "Enter {} from event {}", id, event);
+            vlog(
+              fsm._ctxlog.debug,
+              "Enter {} from event {}",
+              id,
+              fmt::streamed(event));
         }
 
         template<class T>
         void on_exit(const T& event, state_machine_t& fsm) {
-            vlog(fsm._ctxlog.debug, "Exit {} from event {}", id, event);
+            vlog(
+              fsm._ctxlog.debug,
+              "Exit {} from event {}",
+              id,
+              fmt::streamed(event));
         }
     };
 
@@ -359,7 +353,10 @@ public:
           state_machine_t& fsm,
           st_passive& prev,
           st_starting_async& next) {
-            vlog(fsm._ctxlog.info, "starting ntp_archiver {}", new_leadership);
+            vlog(
+              fsm._ctxlog.info,
+              "starting ntp_archiver, term: {}",
+              new_leadership.term);
             prev.clear();
             next.reset_units = fsm._part->get_archiver_reset_units();
             if (!next.reset_units.has_value()) {
@@ -551,7 +548,7 @@ public:
           _ctxlog.error,
           "Exception {} is triggered by the event {}",
           err,
-          event);
+          fmt::streamed(event));
     }
 
 private:

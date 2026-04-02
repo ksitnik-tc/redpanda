@@ -10,11 +10,14 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "cluster_link/replication/partition_replicator.h"
 #include "cluster_link/replication/replication_probe.h"
 #include "cluster_link/replication/types.h"
 #include "container/chunked_hash_map.h"
 #include "ssx/work_queue.h"
+
+#include <fmt/ostream.h>
 
 namespace cluster_link::replication {
 
@@ -64,7 +67,9 @@ private:
 
     // Allowed operations on a replicator
     enum class op_type : uint8_t { start, stop };
+    static std::string_view to_string_view(op_type op);
     friend std::ostream& operator<<(std::ostream& os, op_type);
+    friend struct fmt::formatter<op_type>;
     struct ntp_target_state {
         op_type op;
         std::optional<::model::term_id> term;
@@ -123,3 +128,20 @@ private:
 };
 
 } // namespace cluster_link::replication
+
+template<>
+struct fmt::formatter<
+  cluster_link::replication::link_replication_manager::op_type> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    auto format(
+      cluster_link::replication::link_replication_manager::op_type op,
+      fmt::format_context& ctx) const {
+        return fmt::format_to(
+          ctx.out(),
+          "{}",
+          cluster_link::replication::link_replication_manager::to_string_view(
+            op));
+    }
+};

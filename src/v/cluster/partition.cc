@@ -1536,7 +1536,7 @@ ss::shared_ptr<cluster::id_allocator_stm> partition::id_allocator_stm() const {
 }
 
 std::ostream& operator<<(std::ostream& o, const partition& x) {
-    return o << x._raft;
+    return o << *x._raft;
 }
 ss::shared_ptr<cluster::tm_stm> partition::tm_stm() {
     return _raft->stm_manager()->get<cluster::tm_stm>();

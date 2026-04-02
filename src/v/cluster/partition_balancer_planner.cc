@@ -10,6 +10,7 @@
 
 #include "cluster/partition_balancer_planner.h"
 
+#include "base/format_to.h"
 #include "base/vlog.h"
 #include "cluster/cluster_utils.h"
 #include "cluster/health_monitor_types.h"
@@ -283,6 +284,15 @@ private:
     bool _counts_rebalancing_finished = false;
     ss::abort_source& _as;
 };
+
+} // namespace cluster
+
+template<>
+struct fmt::formatter<
+  cluster::partition_balancer_planner::request_context::partition_sizes>
+  : fmt::ostream_formatter {};
+
+namespace cluster {
 
 std::pair<uint64_t, uint64_t> partition_balancer_planner::get_node_bytes_info(
   const node::local_state& node_state) {

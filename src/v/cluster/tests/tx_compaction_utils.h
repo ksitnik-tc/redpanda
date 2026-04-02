@@ -21,6 +21,8 @@
 
 #include <seastar/core/future.hh>
 
+#include <fmt/ostream.h>
+
 namespace cluster {
 
 class tx_executor {
@@ -78,7 +80,7 @@ public:
               "compact: {} }}",
               s._num_txes,
               s._num_rolls,
-              s._types,
+              static_cast<int>(s._types),
               s._interleave,
               s._compact);
             return os;
@@ -398,3 +400,6 @@ private:
 };
 
 }; // namespace cluster
+
+template<>
+struct fmt::formatter<cluster::tx_executor::spec> : fmt::ostream_formatter {};

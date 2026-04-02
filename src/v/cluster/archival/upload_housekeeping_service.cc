@@ -10,6 +10,7 @@
 
 #include "cluster/archival/upload_housekeeping_service.h"
 
+#include "base/format_to.h"
 #include "cloud_storage/remote.h"
 #include "cluster/archival/fwd.h"
 #include "cluster/archival/logger.h"
@@ -30,26 +31,20 @@
 using namespace std::chrono_literals;
 
 namespace archival {
-
-std::ostream& operator<<(std::ostream& o, housekeeping_state s) {
-    switch (s) {
+std::string_view to_string_view(housekeeping_state e) {
+    switch (e) {
     case housekeeping_state::idle:
-        o << "idle";
-        break;
+        return "idle";
     case housekeeping_state::active:
-        o << "active";
-        break;
+        return "active";
     case housekeeping_state::pause:
-        o << "pause";
-        break;
+        return "pause";
     case housekeeping_state::draining:
-        o << "draining";
-        break;
+        return "draining";
     case housekeeping_state::stopped:
-        o << "stopped";
-        break;
-    };
-    return o;
+        return "stopped";
+    }
+    __builtin_unreachable();
 }
 
 upload_housekeeping_service::upload_housekeeping_service(

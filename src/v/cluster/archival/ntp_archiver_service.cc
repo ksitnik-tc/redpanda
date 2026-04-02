@@ -10,6 +10,7 @@
 
 #include "cluster/archival/ntp_archiver_service.h"
 
+#include "base/format_to.h"
 #include "base/vlog.h"
 #include "cloud_storage/async_manifest_view.h"
 #include "cloud_storage/partition_manifest.h"
@@ -898,7 +899,7 @@ ss::future<> ntp_archiver::upload_topic_manifest() {
       _rtclog.debug,
       "Uploading topic manifest for {}, topic config {}",
       _parent.ntp(),
-      topic_cfg);
+      topic_cfg.get());
 
     auto replication_factor = cluster::replication_factor(
       _parent.raft()->config().current_config().voters.size());
@@ -2702,48 +2703,39 @@ ntp_archiver::maybe_truncate_manifest() {
     }
     co_return result;
 }
-
-std::ostream& operator<<(std::ostream& os, segment_upload_kind upload_kind) {
-    switch (upload_kind) {
+std::string_view to_string_view(segment_upload_kind e) {
+    switch (e) {
     case segment_upload_kind::non_compacted:
-        fmt::print(os, "non-compacted");
-        break;
+        return "non-compacted";
     case segment_upload_kind::compacted:
-        fmt::print(os, "compacted");
-        break;
+        return "compacted";
     }
-    return os;
+    __builtin_unreachable();
 }
-
-std::ostream& operator<<(std::ostream& os, flush_response fr) {
-    switch (fr) {
+std::string_view to_string_view(flush_response e) {
+    switch (e) {
     case flush_response::accepted:
-        fmt::print(os, "accepted");
-        break;
+        return "accepted";
     case flush_response::rejected:
-        fmt::print(os, "rejected");
-        break;
+        return "rejected";
     }
-    return os;
+    __builtin_unreachable();
 }
-
-std::ostream& operator<<(std::ostream& os, flush_result fr) {
-    fmt::print(os, "response: {}, offset: {}", fr.response, fr.offset);
-    return os;
+fmt::iterator flush_result::format_to(fmt::iterator it) const {
+    return fmt::format_to(it, "response: {}, offset: {}", response, offset);
 }
-
-std::ostream& operator<<(std::ostream& os, wait_result fr) {
-    switch (fr) {
+std::string_view to_string_view(wait_result e) {
+    switch (e) {
     case wait_result::not_in_progress:
-        return os << "not in progress";
+        return "not in progress";
     case wait_result::complete:
-        return os << "complete";
+        return "complete";
     case wait_result::lost_leadership:
-        return os << "lost leadership";
+        return "lost leadership";
     case wait_result::failed:
-        return os << "failed";
+        return "failed";
     }
-    return os;
+    __builtin_unreachable();
 }
 
 ss::future<ntp_archiver::housekeeping_result> ntp_archiver::housekeeping() {

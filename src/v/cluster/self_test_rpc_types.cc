@@ -11,6 +11,7 @@
 
 #include "cluster/self_test_rpc_types.h"
 
+#include "base/format_to.h"
 #include "random/generators.h"
 #include "ssx/future-util.h"
 
@@ -30,10 +31,16 @@ ss::sstring self_test_status_as_string(self_test_status sts) {
         __builtin_unreachable();
     }
 }
-
-std::ostream& operator<<(std::ostream& o, self_test_status sts) {
-    fmt::print(o, "{}", self_test_status_as_string(sts));
-    return o;
+std::string_view to_string_view(self_test_status sts) {
+    switch (sts) {
+    case self_test_status::idle:
+        return "idle";
+    case self_test_status::running:
+        return "running";
+    case self_test_status::unreachable:
+        return "unreachable";
+    }
+    __builtin_unreachable();
 }
 
 ss::sstring self_test_stage_as_string(self_test_stage sts) {
@@ -48,10 +55,18 @@ ss::sstring self_test_stage_as_string(self_test_stage sts) {
         return "cloud";
     }
 }
-
-std::ostream& operator<<(std::ostream& o, self_test_stage sts) {
-    fmt::print(o, "{}", self_test_stage_as_string(sts));
-    return o;
+std::string_view to_string_view(self_test_stage sts) {
+    switch (sts) {
+    case self_test_stage::idle:
+        return "idle";
+    case self_test_stage::disk:
+        return "disk";
+    case self_test_stage::net:
+        return "net";
+    case self_test_stage::cloud:
+        return "cloud";
+    }
+    __builtin_unreachable();
 }
 
 ss::future<cluster::netcheck_request>

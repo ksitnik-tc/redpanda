@@ -10,6 +10,7 @@
  */
 #include "cluster/tm_stm_types.h"
 
+#include "base/format_to.h"
 #include "model/timeout_clock.h"
 
 #include <seastar/core/lowres_clock.hh>
@@ -162,60 +163,50 @@ tx_metadata::try_update_status(tx_status requested) {
     last_update_ts = ss::lowres_system_clock::now();
     return std::nullopt;
 }
-
-std::ostream& operator<<(std::ostream& o, tx_status status) {
-    switch (status) {
+std::string_view to_string_view(tx_status e) {
+    switch (e) {
     case tx_status::ongoing:
-        return o << "ongoing";
+        return "ongoing";
     case tx_status::preparing_abort:
-        return o << "preparing_abort";
+        return "preparing_abort";
     case tx_status::preparing_commit:
-        return o << "preparing_commit";
+        return "preparing_commit";
     case tx_status::completed_commit:
-        return o << "completed_commit";
+        return "completed_commit";
     case tx_status::preparing_internal_abort:
-        return o << "expired";
+        return "expired";
     case tx_status::empty:
-        return o << "empty";
+        return "empty";
     case tx_status::tombstone:
-        return o << "tombstone";
+        return "tombstone";
     case tx_status::completed_abort:
-        return o << "completed_abort";
+        return "completed_abort";
     }
 }
-std::ostream& operator<<(std::ostream& o, const tx_metadata::tx_partition& tp) {
-    fmt::print(
-      o,
-      "{{ntp: {}, etag: {}, revision: {}}}",
-      tp.ntp,
-      tp.etag,
-      tp.topic_revision);
-    return o;
+fmt::iterator tx_metadata::tx_partition::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it, "{{ntp: {}, etag: {}, revision: {}}}", ntp, etag, topic_revision);
 }
-
-std::ostream& operator<<(std::ostream& o, const tx_metadata& tx) {
-    fmt::print(
-      o,
+fmt::iterator tx_metadata::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
       "{{id: {}, status: {}, pid: {}, last_pid: {}, etag: {}, seq: {}, "
       "partitions: {}}}",
-      tx.id,
-      tx.status,
-      tx.pid,
-      tx.last_pid,
-      tx.etag,
-      tx.tx_seq,
-      fmt::join(tx.partitions, ", "));
-    return o;
+      id,
+      status,
+      pid,
+      last_pid,
+      etag,
+      tx_seq,
+      fmt::join(partitions, ", "));
 }
-
-std::ostream& operator<<(std::ostream& o, const state_transition_error& err) {
-    fmt::print(
-      o,
+fmt::iterator state_transition_error::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
       "Can not update transaction state from {} to {} as this transition is "
       "invalid",
-      err.from,
-      err.to);
-    return o;
+      from,
+      to);
 }
 
 } // namespace cluster

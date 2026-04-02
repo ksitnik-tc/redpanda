@@ -82,16 +82,20 @@ void link_replication_manager::unset_data_probe() {
     }
 }
 
+std::string_view link_replication_manager::to_string_view(op_type op) {
+    switch (op) {
+    case op_type::start:
+        return "start";
+    case op_type::stop:
+        return "stop";
+    default:
+        return "unknown";
+    }
+}
+
 std::ostream&
 operator<<(std::ostream& os, link_replication_manager::op_type op) {
-    switch (op) {
-    case link_replication_manager::op_type::start:
-        return os << "start";
-    case link_replication_manager::op_type::stop:
-        return os << "stop";
-    default:
-        return os << "unknown";
-    }
+    return os << link_replication_manager::to_string_view(op);
 }
 
 fmt::iterator

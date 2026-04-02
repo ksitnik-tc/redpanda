@@ -13,6 +13,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_set.h"
+#include "base/format_to.h"
 #include "base/oncore.h"
 #include "base/vassert.h"
 #include "cluster/types.h"
@@ -76,11 +77,16 @@ public:
 
     ss::sstring name() const { return _impl->name(); }
 
-private:
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "hard: [{}]", name());
+    }
+
     friend std::ostream& operator<<(std::ostream& o, const hard_constraint& c) {
         fmt::print(o, "hard: [{}]", c.name());
         return o;
     }
+
+private:
     std::unique_ptr<impl> _impl;
 };
 
@@ -114,12 +120,16 @@ public:
 
     ss::sstring name() const { return _impl->name(); }
 
-private:
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "soft: [{}]", name());
+    }
+
     friend std::ostream& operator<<(std::ostream& o, const soft_constraint& c) {
         fmt::print(o, "soft: [{}]", c.name());
         return o;
     }
 
+private:
     std::unique_ptr<impl> _impl;
 };
 
@@ -177,6 +187,9 @@ struct allocation_constraints {
     }
 
     void add(allocation_constraints);
+
+    fmt::iterator format_to(fmt::iterator it) const;
+
     friend std::ostream&
     operator<<(std::ostream&, const allocation_constraints&);
 };
@@ -336,8 +349,7 @@ struct partition_constraints {
     std::optional<raft::group_id> existing_group;
     replicas_t existing_replicas;
 
-    friend std::ostream&
-    operator<<(std::ostream&, const partition_constraints&);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 using node2count_t = absl::flat_hash_map<model::node_id, size_t>;
@@ -358,7 +370,7 @@ struct allocation_request {
     // objective.
     std::optional<node2count_t> existing_replica_counts;
 
-    friend std::ostream& operator<<(std::ostream&, const allocation_request&);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 /**
@@ -393,8 +405,11 @@ struct simple_allocation_request {
     // objective.
     std::optional<node2count_t> existing_replica_counts;
 
-    friend std::ostream&
-    operator<<(std::ostream&, const simple_allocation_request&);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 } // namespace cluster
+
+// hard_constraint and soft_constraint keep operator<< for lw_shared_ptr
+// compatibility while using format_to-based formatters via the
+// HasFormatToMethod concept.

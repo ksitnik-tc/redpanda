@@ -11,6 +11,7 @@
 #include "cluster/partition_recovery_manager.h"
 
 #include "absl/container/btree_map.h"
+#include "base/format_to.h"
 #include "bytes/streambuf.h"
 #include "cloud_storage/logger.h"
 #include "cloud_storage/partition_manifest_downloader.h"
@@ -240,19 +241,25 @@ using retention = std::variant<
   std::monostate,
   size_bound_deletion_parameters,
   time_bound_deletion_parameters>;
-
 std::ostream& operator<<(std::ostream& o, const retention& r) {
     if (std::holds_alternative<std::monostate>(r)) {
-        fmt::print(o, "{{none}}");
+        return o << "{none}";
     } else if (std::holds_alternative<size_bound_deletion_parameters>(r)) {
         auto p = std::get<size_bound_deletion_parameters>(r);
         fmt::print(o, "{{size-bytes: {}}}", p.bytes);
-    } else if (std::holds_alternative<time_bound_deletion_parameters>(r)) {
+    } else {
         auto p = std::get<time_bound_deletion_parameters>(r);
         fmt::print(o, "{{time-ms: {}}}", p.duration.count());
     }
     return o;
 }
+
+} // namespace cloud_storage
+
+template<>
+struct fmt::formatter<cloud_storage::retention> : fmt::ostream_formatter {};
+
+namespace cloud_storage {
 
 static retention get_retention_policy(const storage::ntp_config& prop) {
     if (prop.is_remotely_collectable()) {

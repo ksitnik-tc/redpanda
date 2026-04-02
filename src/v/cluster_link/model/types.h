@@ -1228,7 +1228,10 @@ template<>
 struct fmt::formatter<cluster_link::model::mirror_topic_status>
   : fmt::formatter<string_view> {
     auto format(cluster_link::model::mirror_topic_status s, format_context& ctx)
-      -> decltype(ctx.out());
+      const -> decltype(ctx.out()) {
+        return fmt::formatter<string_view>::format(
+          cluster_link::model::to_string_view(s), ctx);
+    }
 };
 
 template<>
@@ -1241,9 +1244,9 @@ struct fmt::formatter<cluster_link::model::task_state>
 template<>
 struct fmt::formatter<cluster_link::model::scram_credentials>
   : fmt::formatter<string_view> {
-    auto
-    format(const cluster_link::model::scram_credentials& m, format_context& ctx)
-      -> decltype(ctx.out());
+    auto format(
+      const cluster_link::model::scram_credentials& m,
+      format_context& ctx) const -> decltype(ctx.out());
 };
 
 template<>
@@ -1253,7 +1256,7 @@ struct fmt::formatter<
     auto format(
       const std::optional<
         cluster_link::model::connection_config::authn_variant>& m,
-      format_context& ctx) -> decltype(ctx.out());
+      format_context& ctx) const -> decltype(ctx.out());
 };
 
 template<>
@@ -1277,9 +1280,9 @@ struct fmt::formatter<cluster_link::model::tls_file_or_value>
 
         return it;
     }
-    auto
-    format(const cluster_link::model::tls_file_or_value& m, format_context& ctx)
-      -> decltype(ctx.out());
+    auto format(
+      const cluster_link::model::tls_file_or_value& m,
+      format_context& ctx) const -> decltype(ctx.out());
 
 private:
     bool _is_sensitive{false};
@@ -1306,7 +1309,7 @@ struct fmt::formatter<std::optional<cluster_link::model::tls_file_or_value>>
     }
     auto format(
       const std::optional<cluster_link::model::tls_file_or_value>& m,
-      format_context& ctx) -> decltype(ctx.out());
+      format_context& ctx) const -> decltype(ctx.out());
 
 private:
     bool _is_sensitive{false};
@@ -1315,15 +1318,16 @@ private:
 template<>
 struct fmt::formatter<cluster_link::model::connection_config>
   : fmt::formatter<string_view> {
-    auto
-    format(const cluster_link::model::connection_config& m, format_context& ctx)
-      -> decltype(ctx.out());
+    auto format(
+      const cluster_link::model::connection_config& m,
+      format_context& ctx) const -> decltype(ctx.out());
 };
 
 template<>
 struct fmt::formatter<std::optional<model::topic_id>>
   : fmt::formatter<string_view> {
-    auto format(const std::optional<model::topic_id>& m, format_context& ctx)
+    auto
+    format(const std::optional<model::topic_id>& m, format_context& ctx) const
       -> decltype(ctx.out());
 };
 
@@ -1394,7 +1398,8 @@ struct fmt::formatter<cluster_link::model::link_state>
 template<>
 struct fmt::formatter<cluster_link::model::metadata>
   : fmt::formatter<string_view> {
-    auto format(const cluster_link::model::metadata& m, format_context& ctx)
+    auto
+    format(const cluster_link::model::metadata& m, format_context& ctx) const
       -> decltype(ctx.out());
 };
 
@@ -1402,8 +1407,8 @@ template<>
 struct fmt::formatter<cluster_link::model::add_mirror_topic_cmd>
   : fmt::formatter<string_view> {
     auto format(
-      const cluster_link::model::add_mirror_topic_cmd& m, format_context& ctx)
-      -> decltype(ctx.out());
+      const cluster_link::model::add_mirror_topic_cmd& m,
+      format_context& ctx) const -> decltype(ctx.out());
 };
 
 template<>
@@ -1411,7 +1416,7 @@ struct fmt::formatter<cluster_link::model::update_mirror_topic_status_cmd>
   : fmt::formatter<string_view> {
     auto format(
       const cluster_link::model::update_mirror_topic_status_cmd& m,
-      format_context& ctx) -> decltype(ctx.out());
+      format_context& ctx) const -> decltype(ctx.out());
 };
 
 template<>
@@ -1419,7 +1424,7 @@ struct fmt::formatter<cluster_link::model::update_mirror_topic_properties_cmd>
   : fmt::formatter<string_view> {
     auto format(
       const cluster_link::model::update_mirror_topic_properties_cmd& m,
-      format_context& ctx) -> decltype(ctx.out());
+      format_context& ctx) const -> decltype(ctx.out());
 };
 
 template<>
