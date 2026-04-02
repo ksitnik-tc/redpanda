@@ -10,6 +10,7 @@
  */
 
 #pragma once
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "bytes/iobuf.h"
 #include "model/fundamental.h"
@@ -155,7 +156,16 @@ private:
     mutable offset_monitor<model::offset> _waiters;
     model::offset _next{0};
 };
-std::ostream& operator<<(std::ostream&, const stm_initial_recovery_policy&);
+inline constexpr std::string_view
+to_string_view(stm_initial_recovery_policy p) {
+    switch (p) {
+    case stm_initial_recovery_policy::read_everything:
+        return "read_everything";
+    case stm_initial_recovery_policy::skip_to_end:
+        return "skip_to_end";
+    }
+    __builtin_unreachable();
+}
 /**
  * This flavor of state machine base allows implementer to opt out from taking
  * snapshot at arbitrary offset. This way a partition that the STM is based on

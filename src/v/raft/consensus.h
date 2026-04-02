@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/likely.h"
 #include "base/seastarx.h"
 #include "config/property.h"
@@ -992,7 +993,16 @@ private:
     // simulate storage issues
     bool _inject_error_in_append_entries = false;
 
-    friend std::ostream& operator<<(std::ostream&, const consensus&);
+    fmt::iterator format_to(fmt::iterator it) const;
+
+    // Explicit operator<< for non-copyable type (seastar::lw_shared_ptr
+    // uses operator<< directly).
+    friend std::ostream& operator<<(std::ostream& o, const consensus& c) {
+        fmt::memory_buffer buf;
+        c.format_to(fmt::appender(buf));
+        o.write(buf.data(), buf.size());
+        return o;
+    }
 };
 
 } // namespace raft

@@ -11,6 +11,9 @@
 
 #pragma once
 
+#include "base/format_to.h"
+
+#include <string_view>
 #include <system_error>
 
 namespace raft {
@@ -41,6 +44,61 @@ enum class errc : int16_t {
     replicate_first_stage_exception,
     invalid_input_records,
 };
+
+constexpr std::string_view to_string_view(errc e) {
+    switch (e) {
+    case errc::success:
+        return "raft::errc::success";
+    case errc::disconnected_endpoint:
+        return "raft::errc::disconnected_endpoint";
+    case errc::exponential_backoff:
+        return "raft::errc::exponential_backoff";
+    case errc::non_majority_replication:
+        return "raft::errc::non_majority_replication";
+    case errc::not_leader:
+        return "raft::errc::not_leader";
+    case errc::vote_dispatch_error:
+        return "raft::errc::vote_dispatch_error";
+    case errc::append_entries_dispatch_error:
+        return "raft::errc::append_entries_dispatch_error";
+    case errc::replicated_entry_truncated:
+        return "raft::errc::replicated_entry_truncated";
+    case errc::leader_flush_failed:
+        return "raft::errc::leader_flush_failed";
+    case errc::leader_append_failed:
+        return "raft::errc::leader_append_failed";
+    case errc::timeout:
+        return "raft::errc::timeout";
+    case errc::configuration_change_in_progress:
+        return "raft::errc::configuration_change_in_progress";
+    case errc::node_does_not_exists:
+        return "raft::errc::node_does_not_exists";
+    case errc::leadership_transfer_in_progress:
+        return "raft::errc::leadership_transfer_in_progress";
+    case errc::transfer_to_current_leader:
+        return "raft::errc::transfer_to_current_leader";
+    case errc::node_already_exists:
+        return "raft::errc::node_already_exists";
+    case errc::invalid_configuration_update:
+        return "raft::errc::invalid_configuration_update";
+    case errc::not_voter:
+        return "raft::errc::not_voter";
+    case errc::invalid_target_node:
+        return "raft::errc::invalid_target_node";
+    case errc::shutting_down:
+        return "raft::errc::shutting_down";
+    case errc::replicate_batcher_cache_error:
+        return "raft::errc::replicate_batcher_cache_error";
+    case errc::group_not_exists:
+        return "raft::errc::group_not_exists";
+    case errc::replicate_first_stage_exception:
+        return "raft::errc::replicate_first_stage_exception";
+    case errc::invalid_input_records:
+        return "raft::errc::invalid_input_records";
+    }
+    return "raft::errc::unknown";
+}
+
 struct errc_category final : public std::error_category {
     const char* name() const noexcept final { return "raft::errc"; }
 

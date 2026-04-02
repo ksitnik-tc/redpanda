@@ -3322,16 +3322,15 @@ void consensus::trigger_leadership_notification() {
     _leadership_changed.broadcast();
 }
 
-std::ostream& operator<<(std::ostream& o, const consensus& c) {
-    fmt::print(
-      o,
+fmt::iterator consensus::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
       "{{log:{}, group_id:{}, term: {}, commit_index: {}, voted_for:{}}}",
-      c._log,
-      c._group,
-      c._term,
-      c._commit_index,
-      c._voted_for);
-    return o;
+      _log,
+      _group,
+      _term,
+      _commit_index,
+      _voted_for);
 }
 
 const group_configuration& consensus::config() const {

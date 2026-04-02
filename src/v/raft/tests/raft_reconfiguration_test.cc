@@ -76,6 +76,9 @@ std::ostream& operator<<(std::ostream& o, isolated_t pt) {
     __builtin_unreachable();
 }
 
+template<>
+struct fmt::formatter<isolated_t> : fmt::ostream_formatter {};
+
 struct reconfiguration_test
   : testing::WithParamInterface<std::tuple<
       use_snapshot,

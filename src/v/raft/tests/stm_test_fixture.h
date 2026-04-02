@@ -37,6 +37,8 @@
 #include <seastar/util/bool_class.hh>
 #include <seastar/util/log.hh>
 
+#include <fmt/ostream.h>
+
 #include <ostream>
 
 using namespace raft;
@@ -64,6 +66,9 @@ struct value_entry
     }
 };
 } // namespace
+
+template<>
+struct fmt::formatter<value_entry> : fmt::ostream_formatter {};
 
 /**
  * Simple kv-store state machine

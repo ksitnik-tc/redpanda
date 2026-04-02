@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/outcome.h"
 #include "model/fundamental.h"
 #include "raft/errc.h"
@@ -21,6 +22,18 @@
 namespace raft {
 
 enum class consistency_level { quorum_ack, leader_ack, no_ack };
+
+inline constexpr std::string_view to_string_view(consistency_level l) {
+    switch (l) {
+    case consistency_level::quorum_ack:
+        return "consistency_level::quorum_ack";
+    case consistency_level::leader_ack:
+        return "consistency_level::leader_ack";
+    case consistency_level::no_ack:
+        return "consistency_level::no_ack";
+    }
+    __builtin_unreachable();
+}
 
 struct replicate_options {
     explicit replicate_options(
