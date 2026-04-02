@@ -10,9 +10,8 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "strings/string_switch.h"
-
-#include <ostream>
 
 /*
  * Because `config::` is used across every part of Redpanda, it's easy to create
@@ -48,12 +47,12 @@ namespace config {
 
 enum class s3_url_style { virtual_host = 0, path };
 
-inline std::ostream& operator<<(std::ostream& os, const s3_url_style& us) {
+constexpr std::string_view to_string_view(s3_url_style us) {
     switch (us) {
     case s3_url_style::virtual_host:
-        return os << "virtual_host";
+        return "virtual_host";
     case s3_url_style::path:
-        return os << "path";
+        return "path";
     }
 }
 
@@ -75,10 +74,6 @@ constexpr std::string_view to_string_view(fips_mode_flag f) {
     case fips_mode_flag::permissive:
         return "permissive";
     }
-}
-
-inline std::ostream& operator<<(std::ostream& o, fips_mode_flag f) {
-    return o << to_string_view(f);
 }
 
 inline std::istream& operator>>(std::istream& i, fips_mode_flag& f) {
@@ -114,10 +109,6 @@ constexpr std::string_view to_string_view(tls_version v) {
     }
 }
 
-inline std::ostream& operator<<(std::ostream& os, const tls_version& v) {
-    return os << to_string_view(v);
-}
-
 enum class datalake_catalog_type { object_storage, rest };
 
 constexpr std::string_view to_string_view(datalake_catalog_type ct) {
@@ -132,10 +123,6 @@ static constexpr auto acceptable_datalake_catalog_types() {
     return std::to_array(
       {to_string_view(datalake_catalog_type::rest),
        to_string_view(datalake_catalog_type::object_storage)});
-}
-
-inline std::ostream& operator<<(std::ostream& o, datalake_catalog_type ct) {
-    return o << to_string_view(ct);
 }
 
 inline std::istream& operator>>(std::istream& is, datalake_catalog_type& ct) {
@@ -166,11 +153,6 @@ constexpr std::string_view to_string_view(datalake_catalog_auth_mode cam) {
     case datalake_catalog_auth_mode::gcp:
         return "gcp";
     }
-}
-
-inline std::ostream&
-operator<<(std::ostream& os, datalake_catalog_auth_mode cam) {
-    return os << to_string_view(cam);
 }
 
 inline std::istream&
@@ -213,10 +195,6 @@ static constexpr auto acceptable_tls_name_format_values() {
        to_string_view(tls_name_format::rfc2253)});
 }
 
-inline std::ostream& operator<<(std::ostream& os, tls_name_format format) {
-    return os << to_string_view(format);
-}
-
 inline std::istream& operator>>(std::istream& is, tls_name_format& format) {
     ss::sstring s;
     is >> s;
@@ -254,6 +232,5 @@ static constexpr auto acceptable_audit_log_failure_policy_values() {
        to_string_view(audit_failure_policy::permit)});
 }
 
-std::ostream& operator<<(std::ostream&, audit_failure_policy);
 std::istream& operator>>(std::istream&, audit_failure_policy&);
 } // namespace config

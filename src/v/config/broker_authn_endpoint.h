@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "config/convert.h"
 #include "config/from_string_view.h"
 #include "config/property.h"
@@ -47,8 +48,7 @@ struct broker_authn_endpoint {
     friend bool operator==(
       const broker_authn_endpoint&, const broker_authn_endpoint&) = default;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const broker_authn_endpoint& ep);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 namespace detail {

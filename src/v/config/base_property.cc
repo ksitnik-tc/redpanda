@@ -12,8 +12,6 @@
 #include "base/vassert.h"
 #include "config/config_store.h"
 
-#include <ostream>
-
 namespace config {
 base_property::base_property(
   config_store& conf,
@@ -29,11 +27,6 @@ base_property::base_property(
 
         vassert(inserted, "Two properties tried to register the same alias");
     }
-}
-
-std::ostream& operator<<(std::ostream& o, const base_property& p) {
-    p.print(o);
-    return o;
 }
 
 std::string_view to_string_view(visibility v) {

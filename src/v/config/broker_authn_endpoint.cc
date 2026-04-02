@@ -40,9 +40,8 @@ from_string_view<broker_authn_method>(std::string_view sv) {
       .default_match(broker_authn_method::none);
 }
 
-std::ostream& operator<<(std::ostream& os, const broker_authn_endpoint& ep) {
-    fmt::print(os, "{{{}:{}:{}}}", ep.name, ep.address, ep.authn_method);
-    return os;
+fmt::iterator broker_authn_endpoint::format_to(fmt::iterator it) const {
+    return fmt::format_to(it, "{{{}:{}:{}}}", name, address, authn_method);
 }
 
 bool kafka_authz_enabled() {

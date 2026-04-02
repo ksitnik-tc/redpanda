@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "config/convert.h"
 #include "config/from_string_view.h"
 #include "config/property.h"
@@ -47,8 +48,7 @@ struct rest_authn_endpoint {
     friend bool operator==(
       const rest_authn_endpoint&, const rest_authn_endpoint&) = default;
 
-    friend std::ostream&
-    operator<<(std::ostream& os, const rest_authn_endpoint& ep);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 // A helper method that searches for the listener within a vector of
