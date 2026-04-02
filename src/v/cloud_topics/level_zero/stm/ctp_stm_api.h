@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "cloud_topics/level_zero/common/producer_queue.h"
 #include "cloud_topics/level_zero/stm/types.h"
 #include "cloud_topics/types.h"
@@ -20,7 +21,6 @@
 #include <seastar/core/gate.hh>
 
 #include <expected>
-#include <ostream>
 
 struct ctp_stm_api_accessor;
 class prefix_logger;
@@ -36,7 +36,18 @@ enum class ctp_stm_api_errc : uint8_t {
     failure,
 };
 
-std::ostream& operator<<(std::ostream& o, ctp_stm_api_errc errc);
+constexpr std::string_view to_string_view(ctp_stm_api_errc errc) {
+    switch (errc) {
+    case ctp_stm_api_errc::timeout:
+        return "timeout";
+    case ctp_stm_api_errc::not_leader:
+        return "not_leader";
+    case ctp_stm_api_errc::shutdown:
+        return "shutdown";
+    case ctp_stm_api_errc::failure:
+        return "failure";
+    }
+}
 
 class ctp_stm_api {
     friend struct ::ctp_stm_api_accessor;

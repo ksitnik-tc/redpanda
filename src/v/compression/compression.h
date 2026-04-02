@@ -10,6 +10,7 @@
  */
 
 #pragma once
+#include "base/format_to.h"
 #include "bytes/iobuf.h"
 
 namespace compression {
@@ -23,7 +24,20 @@ enum class type : uint8_t {
     lz4,
     zstd,
 };
-std::ostream& operator<<(std::ostream& os, const type& c);
+
+constexpr std::string_view to_string_view(type c) {
+    switch (c) {
+    case type::gzip:
+        return "gzip";
+    case type::java_snappy:
+        return "java_snappy";
+    case type::lz4:
+        return "lz4";
+    case type::zstd:
+        return "zstd";
+    }
+    return "compression::type::unknown";
+}
 
 // a very simple compressor. Exposes virtually no knobs and uses
 // the defaults for all compressors. In the future, we can make these

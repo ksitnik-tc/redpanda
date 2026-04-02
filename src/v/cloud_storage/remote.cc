@@ -253,7 +253,7 @@ ss::future<upload_result> remote::upload_manifest(
         .backoff_cb = [this] { _probe.manifest_upload_backoff(); },
         .on_req_cb = make_notify_cb(api_activity_type::manifest_upload, parent),
       },
-      .display_str = to_string(upload_type::manifest),
+      .display_str = to_string_view(upload_type::manifest),
       .payload = std::move(buf),
       .accept_no_content_response = false,
     });
@@ -375,7 +375,7 @@ ss::future<upload_result> remote::upload_index(
           .failure_cb = [this] { _probe.failed_index_upload(); },
           .on_req_cb = make_notify_cb(api_activity_type::object_upload, parent),
         },
-        .display_str = to_string(upload_type::segment_index),
+        .display_str = to_string_view(upload_type::segment_index),
         .payload = std::move(buf),
       })
       .then([h = std::move(holder)](upload_result r) { return r; });
@@ -476,7 +476,7 @@ ss::future<download_result> remote::download_index(
          .on_req_cb = make_notify_cb(
            api_activity_type::object_download, parent),
        },
-       .display_str = to_string(download_type::segment_index),
+       .display_str = to_string_view(download_type::segment_index),
        .payload = buffer});
     if (dl_result == download_result::success) {
         ix.from_iobuf(std::move(buffer));
@@ -496,7 +496,7 @@ remote::download_object(download_request download_request) {
     return io()
       .download_object({
         .transfer_details = std::move(details),
-        .display_str = to_string(download_request.type),
+        .display_str = to_string_view(download_request.type),
         .payload = download_request.payload,
       })
       .then([h = std::move(holder)](download_result r) { return r; });
@@ -510,7 +510,7 @@ ss::future<download_result> remote::object_exists(
     _as.check();
     auto holder = _gate.hold();
     co_return co_await io().object_exists(
-      bucket, path, parent, fmt::to_string(object_type));
+      bucket, path, parent, fmt::format("{}", object_type));
 }
 
 ss::future<download_result> remote::segment_exists(
@@ -523,7 +523,7 @@ ss::future<download_result> remote::segment_exists(
       bucket,
       cloud_storage_clients::object_key{segment_path},
       parent,
-      fmt::to_string(existence_check_type::segment));
+      fmt::format("{}", existence_check_type::segment));
 }
 
 ss::future<upload_result> remote::delete_object(
@@ -607,7 +607,7 @@ ss::future<upload_result> remote::upload_object(upload_request req) {
     return io()
       .upload_object({
         .transfer_details = std::move(details),
-        .display_str = to_string(req.type),
+        .display_str = to_string_view(req.type),
         .payload = std::move(req.payload),
         .accept_no_content_response = false,
       })

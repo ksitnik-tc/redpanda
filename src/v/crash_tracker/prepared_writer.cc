@@ -35,21 +35,6 @@ using namespace std::chrono_literals;
 
 namespace crash_tracker {
 
-std::ostream& operator<<(std::ostream& os, prepared_writer::state s) {
-    switch (s) {
-    case prepared_writer::state::uninitialized:
-        return os << "uninitialized";
-    case prepared_writer::state::initialized:
-        return os << "initialized";
-    case prepared_writer::state::filled:
-        return os << "filled";
-    case prepared_writer::state::written:
-        return os << "written";
-    case prepared_writer::state::released:
-        return os << "released";
-    }
-}
-
 ss::future<>
 prepared_writer::initialize(std::filesystem::path crash_file_path) {
     vassert(_state == state::uninitialized, "Unexpected state: {}", _state);

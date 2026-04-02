@@ -11,6 +11,8 @@
 
 #include "pandaproxy/schema_registry/types.h"
 
+#include <fmt/format.h>
+
 #include <system_error>
 #include <type_traits>
 
@@ -87,3 +89,10 @@ namespace std {
 template<>
 struct is_error_code_enum<datalake::get_schema_error> : true_type {};
 } // namespace std
+
+template<>
+struct fmt::formatter<datalake::get_schema_error> : fmt::formatter<int> {
+    auto format(datalake::get_schema_error e, fmt::format_context& ctx) const {
+        return fmt::formatter<int>::format(static_cast<int>(e), ctx);
+    }
+};

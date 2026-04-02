@@ -143,17 +143,19 @@ ss::shared_ptr<client_probe> s3_configuration::make_probe() const {
       endpoint_url{server_addr.host()});
 }
 
-std::ostream& operator<<(std::ostream& o, const s3_configuration& c) {
-    o << "{access_key:"
-      << c.access_key.value_or(cloud_roles::public_key_str{""})
-      << ",region:" << c.region() << ",service:" << c.service()
-      << ",secret_key:****"
-      << ",url_style:" << c.url_style << ",access_point_uri:" << c.uri()
-      << ",server_addr:" << c.server_addr << ",max_idle_time:"
-      << std::chrono::duration_cast<std::chrono::milliseconds>(c.max_idle_time)
-           .count()
-      << "}";
-    return o;
+fmt::iterator s3_configuration::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
+      "{{{{access_key:{},region:{},service:{},secret_key:****,url_style:{},"
+      "access_point_uri:{},server_addr:{},max_idle_time:{}}}}}",
+      access_key.value_or(cloud_roles::public_key_str{""}),
+      region(),
+      service(),
+      url_style,
+      uri(),
+      server_addr,
+      std::chrono::duration_cast<std::chrono::milliseconds>(max_idle_time)
+        .count());
 }
 
 ss::future<abs_configuration> abs_configuration::make_configuration(
@@ -235,27 +237,18 @@ void apply_self_configuration_result(
       });
 }
 
-std::ostream& operator<<(std::ostream& o, const abs_configuration& c) {
-    o << "{storage_account_name: " << c.storage_account_name()
-      << ", shared_key:" << (c.shared_key.has_value() ? "****" : "none")
-      << ", access_point_uri:" << c.uri() << ", server_addr:" << c.server_addr
-      << ", max_idle_time:"
-      << std::chrono::duration_cast<std::chrono::milliseconds>(c.max_idle_time)
-           .count()
-      << ", is_hns_enabled:" << c.is_hns_enabled << "}";
-    return o;
-}
-
-std::ostream&
-operator<<(std::ostream& o, const abs_self_configuration_result& r) {
-    o << "{is_hns_enabled: " << r.is_hns_enabled << "}";
-    return o;
-}
-
-std::ostream&
-operator<<(std::ostream& o, const s3_self_configuration_result& r) {
-    o << "{s3_url_style: " << r.url_style << "}";
-    return o;
+fmt::iterator abs_configuration::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
+      "{{{{storage_account_name: {}, shared_key:{}, access_point_uri:{}, "
+      "server_addr:{}, max_idle_time:{}, is_hns_enabled:{}}}}}",
+      storage_account_name(),
+      (shared_key.has_value() ? "****" : "none"),
+      uri(),
+      server_addr,
+      std::chrono::duration_cast<std::chrono::milliseconds>(max_idle_time)
+        .count(),
+      is_hns_enabled);
 }
 
 std::ostream&

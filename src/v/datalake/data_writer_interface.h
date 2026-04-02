@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "base/outcome.h"
 #include "datalake/base_types.h"
 #include "iceberg/datatypes.h"
@@ -33,7 +34,32 @@ enum class writer_error {
     out_of_disk,
     unknown_error,
 };
-std::ostream& operator<<(std::ostream&, const writer_error&);
+constexpr std::string_view to_string_view(writer_error ev) {
+    switch (ev) {
+    case writer_error::ok:
+        return "Ok";
+    case writer_error::parquet_conversion_error:
+        return "Parquet Conversion Error";
+    case writer_error::file_io_error:
+        return "File IO Error";
+    case writer_error::no_data:
+        return "No data";
+    case writer_error::flush_error:
+        return "Flush failed";
+    case writer_error::oom_error:
+        return "Memory exhausted";
+    case writer_error::time_limit_exceeded:
+        return "Time limit exceeded";
+    case writer_error::shutting_down:
+        return "Shutting down";
+    case writer_error::out_of_disk:
+        return "Disk exhausted";
+    case writer_error::unknown_error:
+        return "Unknown error";
+    case writer_error::retryable_type_resolution_error:
+        return "Retryable type resolution error";
+    }
+}
 
 // Recoverable errors are the class of errors that donot leave the underlying
 // writers in a bad shape. Upon recoverable errors the translator may choose to

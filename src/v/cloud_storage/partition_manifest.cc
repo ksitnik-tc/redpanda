@@ -59,35 +59,11 @@
 #include <type_traits>
 #include <utility>
 
-namespace fmt {
-template<>
-struct fmt::formatter<cloud_storage::partition_manifest::segment_meta> {
-    using segment_meta = cloud_storage::partition_manifest::segment_meta;
-
-    template<typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) {
-        return ctx.begin();
-    }
-
-    template<typename FormatContext>
-    auto format(const segment_meta& m, FormatContext& ctx) {
-        return fmt::format_to(
-          ctx.out(),
-          "{{o={}-{} t={}-{}}}",
-          m.base_offset,
-          m.committed_offset,
-          m.base_timestamp,
-          m.max_timestamp);
-    }
-};
-} // namespace fmt
-
 namespace cloud_storage {
-std::ostream&
-operator<<(std::ostream& s, const partition_manifest_path_components& c) {
-    fmt::print(
-      s, "{{{}: {}-{}-{}-{}}}", c._origin, c._ns, c._topic, c._part, c._rev);
-    return s;
+
+fmt::iterator segment_name_components::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it, "{{{{base_offset: {}, term: {}}}}}", base_offset, term);
 }
 
 std::optional<segment_name_components>

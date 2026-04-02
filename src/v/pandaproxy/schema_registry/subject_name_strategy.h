@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "strings/string_switch.h"
 
@@ -47,11 +48,6 @@ to_string_view_compat(subject_name_strategy e) {
         return "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy";
     }
     return "{invalid}";
-}
-
-inline constexpr std::ostream&
-operator<<(std::ostream& os, subject_name_strategy e) {
-    return os << to_string_view(e);
 }
 
 inline std::istream& operator>>(std::istream& i, subject_name_strategy& e) {

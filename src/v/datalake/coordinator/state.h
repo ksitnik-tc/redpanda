@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "container/chunked_hash_map.h"
 #include "datalake/coordinator/translated_offset_range.h"
 #include "iceberg/manifest_entry.h"
@@ -102,8 +103,17 @@ struct topic_state
         // TODO: GC purged topic states
         purged,
     };
-    friend std::ostream&
-    operator<<(std::ostream&, topic_state::lifecycle_state_t);
+    friend constexpr std::string_view
+    to_string_view(topic_state::lifecycle_state_t s) {
+        switch (s) {
+        case topic_state::lifecycle_state_t::live:
+            return "live";
+        case topic_state::lifecycle_state_t::closed:
+            return "closed";
+        case topic_state::lifecycle_state_t::purged:
+            return "purged";
+        }
+    }
 
     bool has_pending_entries() const;
     bool has_pending_main_entries() const;

@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "base/outcome.h"
 #include "cloud_storage/fwd.h"
 #include "cloud_storage/topic_mount_manifest_path.h"
@@ -28,11 +29,29 @@ enum class topic_mount_result {
     success
 };
 
-std::ostream& operator<<(std::ostream& o, const topic_mount_result& r);
+constexpr std::string_view to_string_view(topic_mount_result r) {
+    switch (r) {
+    case topic_mount_result::mount_manifest_does_not_exist:
+        return "{mount_manifest_does_not_exist}";
+    case topic_mount_result::mount_manifest_not_deleted:
+        return "{mount_manifest_not_deleted}";
+    case topic_mount_result::mount_manifest_exists:
+        return "{topic_manifest_exists}";
+    case topic_mount_result::success:
+        return "{success}";
+    }
+}
 
 enum class topic_unmount_result { mount_manifest_not_created, success };
 
-std::ostream& operator<<(std::ostream& o, const topic_unmount_result& r);
+constexpr std::string_view to_string_view(topic_unmount_result r) {
+    switch (r) {
+    case topic_unmount_result::mount_manifest_not_created:
+        return "{mount_manifest_not_created}";
+    case topic_unmount_result::success:
+        return "{success}";
+    }
+}
 
 class topic_mount_handler {
 public:

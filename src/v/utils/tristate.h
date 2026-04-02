@@ -11,9 +11,8 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
-
-#include <fmt/ostream.h>
 
 #include <optional>
 #include <variant>
@@ -112,17 +111,19 @@ public:
         return lhs._value >= rhs._value;
     }
 
-    friend std::ostream& operator<<(std::ostream& o, tristate<T> t) {
+    friend auto format_as(const tristate<T>& t) {
         if (t.is_disabled()) {
-            fmt::print(o, "{{disabled}}");
-            return o;
+            return fmt::format("{{disabled}}");
         }
         if (t.has_optional_value()) {
-            fmt::print(o, "{{{}}}", t.value());
-            return o;
+            return fmt::format("{{{}}}", t.value());
         }
-        return o << "{{nullopt}}";
-    };
+        return fmt::format("{{nullopt}}");
+    }
+
+    friend std::ostream& operator<<(std::ostream& o, const tristate<T>& t) {
+        return o << format_as(t);
+    }
 
     std::optional<T>& get_optional() {
         return std::get<std::optional<T>>(_value);

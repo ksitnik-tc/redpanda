@@ -352,42 +352,6 @@ bool operator==(const value& lhs, const value& rhs) {
     return std::visit(comparison_visitor{lhs}, rhs);
 }
 
-std::ostream& operator<<(std::ostream& o, const boolean_value& v) {
-    o << fmt::format("boolean({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const int_value& v) {
-    o << fmt::format("int({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const long_value& v) {
-    o << fmt::format("long({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const float_value& v) {
-    o << fmt::format("float({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const double_value& v) {
-    o << fmt::format("double({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const date_value& v) {
-    o << fmt::format("date({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const time_value& v) {
-    o << fmt::format("time({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const timestamp_value& v) {
-    o << fmt::format("timestamp({})", v.val);
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const timestamptz_value& v) {
-    o << fmt::format("timestamptz({})", v.val);
-    return o;
-}
 std::ostream& operator<<(std::ostream& o, const string_value& v) {
     iobuf_const_parser buf_parser{v.val};
     static constexpr auto max_len = 16;
@@ -399,20 +363,12 @@ std::ostream& operator<<(std::ostream& o, const string_value& v) {
     }
     return o;
 }
-std::ostream& operator<<(std::ostream& o, const uuid_value& v) {
-    o << fmt::format("uuid({})", ss::sstring(v.val));
-    return o;
-}
 std::ostream& operator<<(std::ostream& o, const fixed_value& v) {
     o << fmt::format("fixed(size_bytes={})", v.val.size_bytes());
     return o;
 }
 std::ostream& operator<<(std::ostream& o, const binary_value& v) {
     o << fmt::format("binary(size_bytes={})", v.val.size_bytes());
-    return o;
-}
-std::ostream& operator<<(std::ostream& o, const decimal_value& v) {
-    o << fmt::format("decimal({})", v.val);
     return o;
 }
 namespace {

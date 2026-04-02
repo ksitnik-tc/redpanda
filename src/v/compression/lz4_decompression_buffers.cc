@@ -18,20 +18,21 @@
 
 namespace compression {
 
-std::ostream& operator<<(
-  std::ostream& os, lz4_decompression_buffers::alloc_ctx::allocation_state st) {
+std::string_view
+to_string_view(lz4_decompression_buffers::alloc_ctx::allocation_state st) {
     switch (st) {
         using enum compression::lz4_decompression_buffers::alloc_ctx::
           allocation_state;
     case no_buffers_allocated:
-        return os << "no buffers allocated";
+        return "no buffers allocated";
     case input_buffer_allocated:
-        return os << "input buffer allocated";
+        return "input buffer allocated";
     case output_buffer_allocated:
-        return os << "output buffer allocated";
+        return "output buffer allocated";
     case both_buffers_allocated:
-        return os << "both buffers allocated";
+        return "both buffers allocated";
     }
+    __builtin_unreachable();
 }
 
 lz4_decompression_buffers::lz4_decompression_buffers(

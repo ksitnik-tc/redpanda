@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/type_traits.h"
 #include "base/vassert.h"
 #include "bytes/bytes.h"
@@ -207,7 +208,15 @@ public:
 
 /** The values we support passing via FFI right now. */
 enum class val_type { i32, i64 };
-std::ostream& operator<<(std::ostream& o, val_type vt);
+
+constexpr std::string_view to_string_view(val_type vt) {
+    switch (vt) {
+    case val_type::i32:
+        return "i32";
+    case val_type::i64:
+        return "i64";
+    }
+}
 
 namespace detail {
 

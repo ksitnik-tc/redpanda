@@ -10,6 +10,7 @@
 #pragma once
 
 #include "absl/hash/hash.h"
+#include "base/format_to.h"
 #include "cluster/fwd.h"
 #include "config/property.h"
 #include "container/chunked_hash_map.h"
@@ -187,6 +188,23 @@ private:
     ensure_table_map_t in_flight_main_;
     ensure_table_map_t in_flight_dlq_;
 };
-std::ostream& operator<<(std::ostream&, coordinator::errc);
+constexpr std::string_view to_string_view(coordinator::errc e) {
+    switch (e) {
+    case coordinator::errc::not_leader:
+        return "coordinator::errc::not_leader";
+    case coordinator::errc::shutting_down:
+        return "coordinator::errc::shutting_down";
+    case coordinator::errc::stm_apply_error:
+        return "coordinator::errc::stm_apply_error";
+    case coordinator::errc::revision_mismatch:
+        return "coordinator::errc::revision_mismatch";
+    case coordinator::errc::incompatible_schema:
+        return "coordinator::errc::incompatible_schema";
+    case coordinator::errc::timedout:
+        return "coordinator::errc::timedout";
+    case coordinator::errc::failed:
+        return "coordinator::errc::failed";
+    }
+}
 
 } // namespace datalake::coordinator

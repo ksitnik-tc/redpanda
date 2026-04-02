@@ -9,17 +9,4 @@
  */
 #include "datalake/table_creator.h"
 
-namespace datalake {
-
-std::ostream& operator<<(std::ostream& o, const table_creator::errc& e) {
-    switch (e) {
-    case table_creator::errc::incompatible_schema:
-        return o << "table_creator::errc::incompatible_schema";
-    case table_creator::errc::failed:
-        return o << "table_creator::errc::failed";
-    case table_creator::errc::shutting_down:
-        return o << "table_creator::errc::shutting_down";
-    }
-}
-
-} // namespace datalake
+namespace datalake {} // namespace datalake

@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "strings/string_switch.h"
 
 #include <seastar/core/sstring.hh>
@@ -37,10 +38,6 @@ constexpr std::string_view to_string_view(schema_id_validation_mode m) {
     case schema_id_validation_mode::compat:
         return "compat";
     }
-}
-
-inline std::ostream& operator<<(std::ostream& o, schema_id_validation_mode m) {
-    return o << to_string_view(m);
 }
 
 inline std::istream& operator>>(std::istream& i, schema_id_validation_mode& m) {

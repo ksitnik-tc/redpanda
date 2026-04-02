@@ -27,6 +27,8 @@
 #include <seastar/core/lowres_clock.hh>
 #include <seastar/util/defer.hh>
 
+#include <fmt/ostream.h>
+
 #include <algorithm>
 #include <ostream>
 #include <random>
@@ -248,3 +250,7 @@ void topic_manifest_serialize_v1_json(
 } // namespace testing
 
 } // namespace cloud_storage
+
+template<>
+struct fmt::formatter<cloud_storage::in_memory_segment>
+  : fmt::ostream_formatter {};

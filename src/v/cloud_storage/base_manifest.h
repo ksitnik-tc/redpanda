@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "bytes/iobuf.h"
 #include "bytes/iostream.h"
@@ -34,14 +35,36 @@ enum class manifest_type {
     topic_mount
 };
 
-std::ostream& operator<<(std::ostream& s, manifest_type t);
+constexpr std::string_view to_string_view(manifest_type t) {
+    switch (t) {
+    case manifest_type::topic:
+        return "topic";
+    case manifest_type::partition:
+        return "partition";
+    case manifest_type::tx_range:
+        return "tx-range";
+    case manifest_type::cluster_metadata:
+        return "cluster-metadata";
+    case manifest_type::spillover:
+        return "spillover";
+    case manifest_type::topic_mount:
+        return "topic_mount";
+    }
+}
 
 enum class manifest_format {
     json,
     serde,
 };
 
-std::ostream& operator<<(std::ostream& s, manifest_format t);
+constexpr std::string_view to_string_view(manifest_format f) {
+    switch (f) {
+    case manifest_format::json:
+        return "json";
+    case manifest_format::serde:
+        return "serde";
+    }
+}
 class base_manifest {
 public:
     virtual ~base_manifest();

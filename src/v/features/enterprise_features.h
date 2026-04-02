@@ -12,12 +12,11 @@
 #pragma once
 
 #include "absl/container/flat_hash_set.h"
+#include "base/format_to.h"
 #include "config/configuration.h"
 #include "config/property.h"
 
 #include <boost/range/iterator_range.hpp>
-
-#include <iosfwd>
 
 namespace features {
 
@@ -38,7 +37,38 @@ enum class license_required_feature {
     topic_deletion_disabled,
 };
 
-std::ostream& operator<<(std::ostream&, license_required_feature);
+constexpr std::string_view to_string_view(license_required_feature f) {
+    switch (f) {
+    case license_required_feature::audit_logging:
+        return "audit_logging";
+    case license_required_feature::cloud_storage:
+        return "cloud_storage";
+    case license_required_feature::partition_auto_balancing_continuous:
+        return "partition_auto_balancing_continuous";
+    case license_required_feature::core_balancing_continuous:
+        return "core_balancing_continuous";
+    case license_required_feature::gssapi:
+        return "gssapi";
+    case license_required_feature::oidc:
+        return "oidc";
+    case license_required_feature::schema_id_validation:
+        return "schema_id_validation";
+    case license_required_feature::rbac:
+        return "rbac";
+    case license_required_feature::fips:
+        return "fips";
+    case license_required_feature::datalake_iceberg:
+        return "datalake_iceberg";
+    case license_required_feature::leadership_pinning:
+        return "leadership_pinning";
+    case license_required_feature::shadow_linking:
+        return "shadow_linking";
+    case license_required_feature::cloud_topics:
+        return "cloud_topics";
+    case license_required_feature::topic_deletion_disabled:
+        return "topic_deletion_disabled";
+    }
+}
 
 /**
  * Thin wrapper around two sets to indicate the current state of enterprise

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/external_fmt.h"
 #include "base/format_to.h"
 #include "base/seastarx.h"
 #include "http/request_builder.h"

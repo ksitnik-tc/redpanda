@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "cloud_roles/auth_refresh_bg_op.h"
 #include "cloud_storage_clients/client_probe.h"
 #include "cloud_storage_clients/types.h"
@@ -106,7 +107,7 @@ struct s3_configuration : common_configuration {
 
     ss::shared_ptr<client_probe> make_probe() const;
 
-    friend std::ostream& operator<<(std::ostream& o, const s3_configuration& c);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 struct abs_configuration : common_configuration {
@@ -125,8 +126,7 @@ struct abs_configuration : common_configuration {
 
     ss::shared_ptr<client_probe> make_probe() const;
 
-    friend std::ostream&
-    operator<<(std::ostream& o, const abs_configuration& c);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 template<typename T>
@@ -143,10 +143,18 @@ std::ostream& operator<<(std::ostream&, const client_configuration&);
 
 struct abs_self_configuration_result {
     bool is_hns_enabled;
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{{is_hns_enabled: {}}}}}", is_hns_enabled);
+    }
 };
 
 struct s3_self_configuration_result {
     s3_url_style url_style;
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{{s3_url_style: {}}}}}", url_style);
+    }
 };
 
 using client_self_configuration_output
@@ -155,8 +163,6 @@ using client_self_configuration_output
 void apply_self_configuration_result(
   client_configuration&, const client_self_configuration_output&);
 
-std::ostream& operator<<(std::ostream&, const abs_self_configuration_result&);
-std::ostream& operator<<(std::ostream&, const s3_self_configuration_result&);
 std::ostream&
 operator<<(std::ostream&, const client_self_configuration_output&);
 

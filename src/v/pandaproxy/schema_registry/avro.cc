@@ -515,14 +515,18 @@ bool operator==(
     return lhs.raw() == rhs.raw();
 }
 
-std::ostream& operator<<(std::ostream& os, const avro_schema_definition& def) {
-    fmt::print(
-      os,
+fmt::iterator avro_schema_definition::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
       "type: {}, definition: {}, references: {}, metadata: {}",
-      to_string_view(def.type()),
-      def().toJson(false),
-      def.refs(),
-      def.meta());
+      to_string_view(type()),
+      (*this)().toJson(false),
+      refs(),
+      meta());
+}
+
+std::ostream& operator<<(std::ostream& os, const avro_schema_definition& def) {
+    fmt::print(os, "{}", def);
     return os;
 }
 

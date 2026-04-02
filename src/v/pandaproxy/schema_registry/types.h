@@ -12,6 +12,7 @@
 #pragma once
 
 #include "absl/container/btree_map.h"
+#include "base/format_to.h"
 #include "base/outcome.h"
 #include "base/seastarx.h"
 #include "config/startup_config.h"
@@ -91,8 +92,6 @@ from_string_view<schema_type>(std::string_view sv) {
       .default_match(std::nullopt);
 }
 
-std::ostream& operator<<(std::ostream& os, const schema_type& v);
-
 enum class output_format { none = 0, resolved, ignore_extensions, serialized };
 
 constexpr std::string_view to_string_view(output_format of) {
@@ -123,8 +122,6 @@ from_string_view<output_format>(std::string_view sv) {
       .default_match(std::nullopt);
 }
 
-std::ostream& operator<<(std::ostream& os, const output_format& of);
-
 enum class reference_format { none = 0, qualified };
 
 constexpr std::string_view to_string_view(reference_format rf) {
@@ -147,8 +144,6 @@ from_string_view<reference_format>(std::string_view sv) {
         reference_format::qualified)
       .default_match(std::nullopt);
 }
-
-std::ostream& operator<<(std::ostream& os, const reference_format& rf);
 
 ///\brief Type representing a global resource for ACLs.
 using registry_resource = named_type<ss::sstring, struct registry_resource_tag>;
@@ -355,6 +350,7 @@ public:
     friend bool operator==(
       const schema_definition& lhs, const schema_definition& rhs) = default;
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream& operator<<(std::ostream& os, const schema_definition&);
 
     schema_type type() const { return _type; }
@@ -406,6 +402,7 @@ public:
     friend bool operator==(
       const avro_schema_definition& lhs, const avro_schema_definition& rhs);
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream&
     operator<<(std::ostream& os, const avro_schema_definition& rhs);
 
@@ -447,6 +444,7 @@ public:
       const protobuf_schema_definition& lhs,
       const protobuf_schema_definition& rhs);
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream&
     operator<<(std::ostream& os, const protobuf_schema_definition& rhs);
 
@@ -482,6 +480,7 @@ public:
     friend bool operator==(
       const json_schema_definition& lhs, const json_schema_definition& rhs);
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream&
     operator<<(std::ostream& os, const json_schema_definition& rhs);
 
@@ -497,6 +496,10 @@ public:
 private:
     pimpl _impl;
 };
+
+} // namespace pandaproxy::schema_registry
+
+namespace pandaproxy::schema_registry {
 
 ///\brief A schema that has been validated.
 class valid_schema {
@@ -550,9 +553,9 @@ public:
         });
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const valid_schema& def) {
-        def.visit([&os](const auto& def) { os << def; });
-        return os;
+    fmt::iterator format_to(fmt::iterator it) const {
+        visit([&it](const auto& def) { it = fmt::format_to(it, "{}", def); });
+        return it;
     }
 
 private:
@@ -628,7 +631,7 @@ struct seq_marker {
     // them optional provides compatibility with non-rp schema registries. If
     // either is not present, we can assume a collision has not occurred.
     friend bool operator==(const seq_marker&, const seq_marker&) = default;
-    friend std::ostream& operator<<(std::ostream& os, const seq_marker& v);
+    fmt::iterator format_to(fmt::iterator it) const;
 };
 
 ///\brief A schema with its subject
@@ -643,6 +646,7 @@ public:
     friend bool
     operator==(const subject_schema& lhs, const subject_schema& rhs) = default;
 
+    fmt::iterator format_to(fmt::iterator it) const;
     friend std::ostream&
     operator<<(std::ostream& os, const subject_schema& schema);
 
@@ -754,7 +758,11 @@ from_string_view<compatibility_level>(std::string_view sv) {
 struct compatibility_result {
     friend bool operator==(
       const compatibility_result&, const compatibility_result&) = default;
-    friend std::ostream& operator<<(std::ostream&, const compatibility_result&);
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it, "is_compat: {}, messages: {}", is_compat, messages);
+    }
 
     bool is_compat;
     chunked_vector<ss::sstring> messages;
@@ -802,3 +810,8 @@ struct fmt::formatter<pandaproxy::schema_registry::schema_reference> {
     // e : format for error_reporting
     char presentation{'l'};
 };
+
+template<>
+struct fmt::formatter<
+  pandaproxy::schema_registry::schema_definition::raw_string>
+  : fmt::ostream_formatter {};

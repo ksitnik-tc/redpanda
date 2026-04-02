@@ -41,15 +41,14 @@ struct async_view_timestamp_query {
       , ts(ts)
       , max_offset(max_offset) {}
 
-    friend std::ostream&
-    operator<<(std::ostream& o, const async_view_timestamp_query& q) {
-        fmt::print(
-          o,
-          "async_view_timestamp_query{{min_offset:{}, ts:{}, max_offset:{}}}",
-          q.min_offset,
-          q.ts,
-          q.max_offset);
-        return o;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "async_view_timestamp_query{{{{min_offset:{}, ts:{}, "
+          "max_offset:{}}}}}",
+          min_offset,
+          ts,
+          max_offset);
     }
 
     kafka::offset min_offset;
@@ -61,7 +60,7 @@ struct async_view_timestamp_query {
 using async_view_search_query_t
   = std::variant<model::offset, kafka::offset, async_view_timestamp_query>;
 
-std::ostream& operator<<(std::ostream&, const async_view_search_query_t&);
+std::ostream& operator<<(std::ostream& s, const async_view_search_query_t& q);
 
 class async_manifest_view;
 
@@ -219,7 +218,18 @@ enum class async_manifest_view_cursor_status {
     evicted,
 };
 
-std::ostream& operator<<(std::ostream&, async_manifest_view_cursor_status);
+constexpr std::string_view to_string_view(async_manifest_view_cursor_status s) {
+    switch (s) {
+    case async_manifest_view_cursor_status::empty:
+        return "empty";
+    case async_manifest_view_cursor_status::evicted:
+        return "evicted";
+    case async_manifest_view_cursor_status::materialized_stm:
+        return "materialized_stm";
+    case async_manifest_view_cursor_status::materialized_spillover:
+        return "materialized_spillover";
+    }
+}
 
 /// The cursor can be used to traverse manifest
 /// asynchronously. The full content of the manifest

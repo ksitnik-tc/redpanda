@@ -90,7 +90,18 @@ private:
         other,
     };
 
-    friend std::ostream& operator<<(std::ostream&, translator_group);
+    friend constexpr std::string_view to_string_view(translator_group g) {
+        switch (g) {
+        case translator_group::other:
+            return "translator_group::other";
+        case translator_group::unfulfilled_quota:
+            return "translator_group::unfulfilled_quota";
+        case translator_group::about_to_expire:
+            return "translator_group::about_to_expire";
+        case translator_group::expired:
+            return "translator_group::expired";
+        }
+    }
 
     /**
      * Picks a random translator group category with probability proportional

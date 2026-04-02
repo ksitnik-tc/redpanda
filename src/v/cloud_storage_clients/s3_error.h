@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "bytes/iobuf.h"
 
@@ -162,6 +163,8 @@ enum class s3_error_code {
     _unknown
 };
 
+std::string_view to_string_view(s3_error_code code);
+
 /// Operators to use with lexical_cast
 std::ostream& operator<<(std::ostream& o, s3_error_code code);
 std::istream& operator>>(std::istream& i, s3_error_code& code);
@@ -183,8 +186,15 @@ public:
     std::string_view request_id() const noexcept;
     std::string_view resource() const noexcept;
 
-    friend std::ostream&
-    operator<<(std::ostream& o, const rest_error_response& err);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "code: {}, message: {}, request_id: {}, resource: {}",
+          _code_str,
+          _message,
+          _request_id,
+          _resource);
+    }
 
 private:
     s3_error_code _code;
@@ -197,3 +207,15 @@ private:
 };
 
 } // namespace cloud_storage_clients
+
+template<>
+struct fmt::formatter<cloud_storage_clients::rest_error_response> {
+    constexpr auto parse(fmt::format_parse_context& ctx) { return ctx.begin(); }
+    auto format(
+      const cloud_storage_clients::rest_error_response& v,
+      fmt::format_context& ctx) const {
+        fmt::memory_buffer buf;
+        v.format_to(fmt::appender(buf));
+        return std::copy(buf.begin(), buf.end(), ctx.out());
+    }
+};

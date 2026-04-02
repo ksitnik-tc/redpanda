@@ -98,10 +98,12 @@ public:
         return base_named_type(std::numeric_limits<type>::max());
     }
 
-    friend std::ostream& operator<<(std::ostream& o, const base_named_type& t) {
-        fmt::print(o, "{}", t._value);
-        return o;
-    };
+    friend auto format_as(const base_named_type& t) { return t._value; }
+
+    friend std::ostream&
+    operator<<(std::ostream& os, const base_named_type& t) {
+        return os << t._value;
+    }
 
     friend std::istream& operator>>(std::istream& i, base_named_type& t) {
         return i >> t._value;
@@ -173,10 +175,19 @@ public:
     constexpr operator const type&() const& { return _value; }
     constexpr operator type() && { return std::move(_value); }
 
-    friend std::ostream& operator<<(std::ostream& o, const base_named_type& t) {
-        fmt::print(o, "{}", t._value);
-        return o;
-    };
+    friend auto format_as(const base_named_type& t)
+    requires(
+      std::is_copy_constructible_v<type>
+      && !std::is_same_v<type, std::monostate>)
+    {
+        return t._value;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const base_named_type& t)
+    requires requires(std::ostream& o, const type& v) { o << v; }
+    {
+        return os << t._value;
+    }
 
     friend std::istream& operator>>(std::istream& i, base_named_type& t) {
         return i >> t._value;

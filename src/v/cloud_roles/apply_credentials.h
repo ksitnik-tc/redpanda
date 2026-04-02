@@ -73,3 +73,7 @@ std::ostream& operator<<(std::ostream& os, const apply_credentials& ac);
 apply_credentials make_credentials_applier(credentials creds);
 
 } // namespace cloud_roles
+
+template<>
+struct fmt::formatter<cloud_roles::apply_credentials>
+  : fmt::ostream_formatter {};

@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "datalake/schema_identifier.h"
 
 namespace datalake {
@@ -22,7 +23,16 @@ public:
         // The system is shutting down.
         shutting_down,
     };
-    friend std::ostream& operator<<(std::ostream&, const errc&);
+    friend constexpr std::string_view to_string_view(errc e) {
+        switch (e) {
+        case errc::incompatible_schema:
+            return "table_creator::errc::incompatible_schema";
+        case errc::failed:
+            return "table_creator::errc::failed";
+        case errc::shutting_down:
+            return "table_creator::errc::shutting_down";
+        }
+    }
 
     virtual ss::future<checked<std::nullopt_t, errc>> ensure_table(
       const model::topic&,

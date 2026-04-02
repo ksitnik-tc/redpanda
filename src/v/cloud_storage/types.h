@@ -64,7 +64,17 @@ enum class segment_name_format : int16_t {
     v3 = 3
 };
 
-std::ostream& operator<<(std::ostream& o, const segment_name_format& r);
+constexpr std::string_view to_string_view(segment_name_format r) {
+    switch (r) {
+    case segment_name_format::v1:
+        return "{v1}";
+    case segment_name_format::v2:
+        return "{v2}";
+    case segment_name_format::v3:
+        return "{v3}";
+    }
+}
+
 enum class manifest_version : int32_t {
     v1 = 1,
     v2 = 2,
@@ -166,8 +176,30 @@ struct segment_meta
           meta.delta_offset(),
           meta.delta_offset_end());
     }
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "{{{{is_compacted: {}, size_bytes: {}, base_offset: {}, "
+          "committed_offset: "
+          "{}, base_timestamp: {}, max_timestamp: {}, delta_offset: {}, "
+          "ntp_revision: {}, archiver_term: {}, segment_term: {}, "
+          "delta_offset_end: {}, sname_format: {}, metadata_size_hint: {}}}}}",
+          is_compacted,
+          size_bytes,
+          base_offset,
+          committed_offset,
+          base_timestamp,
+          max_timestamp,
+          delta_offset,
+          ntp_revision,
+          archiver_term,
+          segment_term,
+          delta_offset_end,
+          sname_format,
+          metadata_size_hint);
+    }
 };
-std::ostream& operator<<(std::ostream& o, const segment_meta& r);
 
 enum class error_outcome {
     // Represent general failure that can't be handled and doesn't fit into
@@ -286,14 +318,34 @@ struct spillover_manifest_path_components
           c.base_ts(),
           c.last_ts());
     }
-};
 
-std::ostream&
-operator<<(std::ostream& o, const spillover_manifest_path_components& c);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "{{{{base: {}, last: {}, base_kafka: {}, next_kafka: {}, base_ts: "
+          "{}, "
+          "last_ts: {}}}}}",
+          base,
+          last,
+          base_kafka,
+          next_kafka,
+          base_ts,
+          last_ts);
+    }
+};
 
 enum class scrub_status : uint8_t { full, partial, failed };
 
-std::ostream& operator<<(std::ostream& o, const scrub_status&);
+constexpr std::string_view to_string_view(scrub_status s) {
+    switch (s) {
+    case scrub_status::full:
+        return "{full}";
+    case scrub_status::partial:
+        return "{partial}";
+    case scrub_status::failed:
+        return "{failed}";
+    }
+}
 
 enum class anomaly_type : int8_t {
     missing_delta,
@@ -304,7 +356,22 @@ enum class anomaly_type : int8_t {
     offset_overlap
 };
 
-std::ostream& operator<<(std::ostream& o, const anomaly_type&);
+constexpr std::string_view to_string_view(anomaly_type t) {
+    switch (t) {
+    case anomaly_type::missing_delta:
+        return "{missing_delta}";
+    case anomaly_type::non_monotonical_delta:
+        return "{non_monotonical_delta}";
+    case anomaly_type::end_delta_smaller:
+        return "{end_delta_smaller}";
+    case anomaly_type::committed_smaller:
+        return "{committed_smaller}";
+    case anomaly_type::offset_gap:
+        return "{offset_gap}";
+    case anomaly_type::offset_overlap:
+        return "{offset_overlap}";
+    }
+}
 
 struct anomaly_meta
   : serde::envelope<anomaly_meta, serde::version<0>, serde::compat_version<0>> {
@@ -320,9 +387,12 @@ struct anomaly_meta
     friend H AbslHashValue(H h, const anomaly_meta& am) {
         return H::combine(std::move(h), am.type, am.at);
     }
-};
 
-std::ostream& operator<<(std::ostream& o, const anomaly_meta&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it, "{{{{type: {}, at: {}, previous: {}}}}}", type, at, previous);
+    }
+};
 
 using segment_meta_anomalies = absl::node_hash_set<anomaly_meta>;
 
@@ -376,9 +446,9 @@ struct anomalies
     anomalies& operator+=(anomalies&&);
 
     friend bool operator==(const anomalies& lhs, const anomalies& rhs);
-};
 
-std::ostream& operator<<(std::ostream& o, const anomalies& a);
+    fmt::iterator format_to(fmt::iterator it) const;
+};
 
 enum class upload_type {
     object,
@@ -390,7 +460,7 @@ enum class upload_type {
     inventory_configuration,
 };
 
-constexpr std::string_view to_string(upload_type t) {
+constexpr std::string_view to_string_view(upload_type t) {
     switch (t) {
         using enum upload_type;
     case object:
@@ -409,11 +479,10 @@ constexpr std::string_view to_string(upload_type t) {
         return "inventory-configuration";
     }
 }
-std::ostream& operator<<(std::ostream&, upload_type);
 
 enum class download_type { object, segment_index, inventory_report_manifest };
 
-constexpr std::string_view to_string(download_type t) {
+constexpr std::string_view to_string_view(download_type t) {
     switch (t) {
         using enum download_type;
     case object:
@@ -425,11 +494,19 @@ constexpr std::string_view to_string(download_type t) {
     }
 }
 
-std::ostream& operator<<(std::ostream&, download_type);
-
 enum class existence_check_type { object, segment, manifest };
 
-std::ostream& operator<<(std::ostream&, existence_check_type);
+constexpr std::string_view to_string_view(existence_check_type t) {
+    switch (t) {
+        using enum existence_check_type;
+    case object:
+        return "object";
+    case segment:
+        return "segment";
+    case manifest:
+        return "manifest";
+    }
+}
 
 class remote_probe;
 struct upload_request {
@@ -525,3 +602,14 @@ namespace std {
 template<>
 struct is_error_code_enum<cloud_storage::error_outcome> : true_type {};
 } // namespace std
+
+template<>
+struct fmt::formatter<cloud_storage::error_outcome>
+  : fmt::formatter<std::string> {
+    auto
+    format(cloud_storage::error_outcome e, fmt::format_context& ctx) const {
+        return fmt::formatter<std::string>::format(
+          cloud_storage::error_outcome_category{}.message(static_cast<int>(e)),
+          ctx);
+    }
+};

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "absl/numeric/int128.h"
+#include "base/format_to.h"
 #include "bytes/iobuf.h"
 #include "container/chunked_vector.h"
 #include "iceberg/datatypes.h"
@@ -18,55 +19,88 @@
 #include <optional>
 #include <variant>
 
+template<>
+struct fmt::formatter<absl::int128> : fmt::ostream_formatter {};
+
+template<>
+struct fmt::formatter<absl::uint128> : fmt::ostream_formatter {};
+
 namespace iceberg {
 
 struct boolean_value {
     static std::string_view name() { return "boolean"; }
     bool val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "boolean({})", val);
+    }
 };
 
 struct int_value {
     static std::string_view name() { return "int"; }
     int32_t val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "int({})", val);
+    }
 };
 
 struct long_value {
     static std::string_view name() { return "long"; }
     int64_t val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "long({})", val);
+    }
 };
 
 struct float_value {
     static std::string_view name() { return "float"; }
     float val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "float({})", val);
+    }
 };
 
 struct double_value {
     static std::string_view name() { return "double"; }
     double val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "double({})", val);
+    }
 };
 
 struct date_value {
     static std::string_view name() { return "date"; }
     // Days since 1970-01-01.
     int32_t val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "date({})", val);
+    }
 };
 
 struct time_value {
     static std::string_view name() { return "time"; }
     // Microseconds since midnight.
     int64_t val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "time({})", val);
+    }
 };
 
 struct timestamp_value {
     static std::string_view name() { return "timestamp"; }
     // Microseconds since 1970-01-01 00:00:00.
     int64_t val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "timestamp({})", val);
+    }
 };
 
 struct timestamptz_value {
     static std::string_view name() { return "timestamptz"; }
     // Microseconds since 1970-01-01 00:00:00 UTC.
     int64_t val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "timestamptz({})", val);
+    }
 };
 
 struct string_value {
@@ -77,6 +111,9 @@ struct string_value {
 struct uuid_value {
     static std::string_view name() { return "uuid"; }
     uuid_t val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "uuid({})", ss::sstring(val));
+    }
 };
 
 struct fixed_value {
@@ -92,6 +129,9 @@ struct binary_value {
 struct decimal_value {
     static std::string_view name() { return "decimal"; }
     absl::int128 val;
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "decimal({})", val);
+    }
 };
 
 using primitive_value = std::variant<
@@ -157,20 +197,9 @@ bool operator==(const value&, const value&);
 
 value make_copy(const value&);
 
-std::ostream& operator<<(std::ostream&, const boolean_value&);
-std::ostream& operator<<(std::ostream&, const int_value&);
-std::ostream& operator<<(std::ostream&, const long_value&);
-std::ostream& operator<<(std::ostream&, const float_value&);
-std::ostream& operator<<(std::ostream&, const double_value&);
-std::ostream& operator<<(std::ostream&, const date_value&);
-std::ostream& operator<<(std::ostream&, const time_value&);
-std::ostream& operator<<(std::ostream&, const timestamp_value&);
-std::ostream& operator<<(std::ostream&, const timestamptz_value&);
 std::ostream& operator<<(std::ostream&, const string_value&);
-std::ostream& operator<<(std::ostream&, const uuid_value&);
 std::ostream& operator<<(std::ostream&, const fixed_value&);
 std::ostream& operator<<(std::ostream&, const binary_value&);
-std::ostream& operator<<(std::ostream&, const decimal_value&);
 std::ostream& operator<<(std::ostream&, const primitive_value&);
 std::ostream& operator<<(std::ostream&, const struct_value&);
 std::ostream& operator<<(std::ostream&, const list_value&);
@@ -266,3 +295,32 @@ struct hash<iceberg::value> {
 };
 
 } // namespace std
+
+// Iceberg value types use ostream-based formatters because their operator<<
+// implementations involve iobuf parsing and complex recursive variant
+// visitation that would require significant refactoring.
+template<>
+struct fmt::formatter<iceberg::string_value> : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<iceberg::fixed_value> : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<iceberg::binary_value> : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<iceberg::primitive_value> : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<iceberg::struct_value> : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<iceberg::list_value> : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<iceberg::map_value> : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<std::unique_ptr<iceberg::struct_value>>
+  : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<std::unique_ptr<iceberg::list_value>>
+  : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<std::unique_ptr<iceberg::map_value>>
+  : fmt::ostream_formatter {};
+template<>
+struct fmt::formatter<iceberg::value> : fmt::ostream_formatter {};

@@ -17,13 +17,13 @@ fmt::format_context::iterator fmt::formatter<std::monostate>::format(
 }
 
 fmt::format_context::iterator fmt::formatter<absl::Duration>::format(
-  const absl::Duration& d, fmt::format_context& ctx) {
+  const absl::Duration& d, fmt::format_context& ctx) const {
     std::string s = absl::FormatDuration(d);
     return fmt::format_to(ctx.out(), "{}", s);
 }
 
 fmt::format_context::iterator fmt::formatter<absl::Time>::format(
-  const absl::Time& t, fmt::format_context& ctx) {
+  const absl::Time& t, fmt::format_context& ctx) const {
     std::string s = absl::FormatTime(t);
     return fmt::format_to(ctx.out(), "{}", s);
 }

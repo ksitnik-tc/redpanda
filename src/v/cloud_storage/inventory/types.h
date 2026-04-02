@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/outcome.h"
 #include "cloud_storage_clients/types.h"
 #include "model/fundamental.h"
@@ -86,10 +87,22 @@ inline std::ostream& operator<<(std::ostream& o, error_outcome e) {
 using inventory_config_id = named_type<ss::sstring, struct inventory_config>;
 
 enum class report_generation_frequency { daily };
-std::ostream& operator<<(std::ostream&, report_generation_frequency);
+
+constexpr std::string_view to_string_view(report_generation_frequency rgf) {
+    switch (rgf) {
+    case report_generation_frequency::daily:
+        return "Daily";
+    }
+}
 
 enum class report_format { csv };
-std::ostream& operator<<(std::ostream&, report_format);
+
+constexpr std::string_view to_string_view(report_format rf) {
+    switch (rf) {
+    case report_format::csv:
+        return "CSV";
+    }
+}
 
 // A string is used instead of a chrono type because the strings returned by the
 // vendor APIs are already roughly ISO-8601 formatted. This format is well
@@ -115,7 +128,15 @@ enum class inventory_creation_result {
     already_exists,
 };
 
-std::ostream& operator<<(std::ostream&, inventory_creation_result);
+constexpr std::string_view to_string_view(inventory_creation_result icr) {
+    switch (icr) {
+        using enum inventory_creation_result;
+    case success:
+        return "success";
+    case already_exists:
+        return "already-exists";
+    }
+}
 
 template<typename R>
 using op_result = result<R, error_outcome>;
@@ -158,3 +179,19 @@ template<>
 struct is_error_code_enum<cloud_storage::inventory::error_outcome>
   : true_type {};
 } // namespace std
+
+template<>
+struct fmt::formatter<cloud_storage::inventory::error_outcome> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    auto format(
+      cloud_storage::inventory::error_outcome e,
+      fmt::format_context& ctx) const {
+        return fmt::format_to(
+          ctx.out(),
+          "{}",
+          cloud_storage::inventory::inventory_error_category().message(
+            static_cast<int>(e)));
+    }
+};

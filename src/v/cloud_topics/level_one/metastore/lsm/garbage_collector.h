@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "cloud_topics/level_one/common/object_id.h"
 #include "container/chunked_vector.h"
@@ -19,7 +20,6 @@
 #include <seastar/core/future.hh>
 
 #include <expected>
-#include <ostream>
 
 namespace cloud_topics::l1 {
 
@@ -79,14 +79,14 @@ private:
     domain_manager_probe* probe_;
 };
 
-inline std::ostream& operator<<(std::ostream& o, db_garbage_collector::errc e) {
+constexpr std::string_view to_string_view(db_garbage_collector::errc e) {
     switch (e) {
     case db_garbage_collector::errc::db_needs_reopen:
-        return o << "db_needs_reopen";
+        return "db_needs_reopen";
     case db_garbage_collector::errc::io_error:
-        return o << "io_error";
+        return "io_error";
     }
-    return o << "unknown";
+    return "unknown";
 }
 
 } // namespace cloud_topics::l1

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "cluster/fwd.h"
 #include "datalake/coordinator/types.h"
 #include "datalake/data_writer_interface.h"
@@ -215,7 +216,30 @@ enum translation_errc {
     type_resolution_error,
 };
 
-std::ostream& operator<<(std::ostream&, translation_errc);
+constexpr std::string_view to_string_view(translation_errc ec) {
+    switch (ec) {
+    case no_data:
+        return "translation_errc::no_data";
+    case file_io_error:
+        return "translation_errc::file_io_error";
+    case cloud_io_error:
+        return "translation_errc::cloud_io_error";
+    case flush_error:
+        return "translation_errc::flush_error";
+    case discard_error:
+        return "translation_errc::discard_error";
+    case oom_error:
+        return "translation_errc::oom_error";
+    case time_limit_exceeded:
+        return "translation_errc::time_limit_exceeded";
+    case shutting_down:
+        return "translation_errc::shutting_down";
+    case out_of_disk:
+        return "translation_errc::out_of_disk";
+    case type_resolution_error:
+        return "translation_errc::type_resolution_error";
+    }
+}
 
 class translation_context {
 public:

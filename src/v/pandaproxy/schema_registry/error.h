@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include <fmt/format.h>
+
 #include <system_error>
 
 namespace pandaproxy::schema_registry {
@@ -60,3 +62,13 @@ struct is_error_code_enum<pandaproxy::schema_registry::error_code>
   : true_type {};
 
 } // namespace std
+
+template<>
+struct fmt::formatter<pandaproxy::schema_registry::error_code>
+  : fmt::formatter<int> {
+    auto format(
+      pandaproxy::schema_registry::error_code e,
+      fmt::format_context& ctx) const {
+        return fmt::formatter<int>::format(static_cast<int>(e), ctx);
+    }
+};

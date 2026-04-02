@@ -11,12 +11,10 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "bytes/iobuf.h"
 
-#include <fmt/format.h>
-
 #include <cstdint>
-#include <iosfwd>
 #include <memory>
 #include <utility>
 
@@ -46,7 +44,7 @@ enum class token {
     eof,
 };
 
-inline constexpr std::string_view format_as(token t) {
+inline constexpr std::string_view to_string_view(token t) {
     switch (t) {
     case token::error:
         return "error";
@@ -76,10 +74,6 @@ inline constexpr std::string_view format_as(token t) {
         return "eof";
     }
     std::unreachable();
-}
-
-inline std::ostream& operator<<(std::ostream& os, token t) {
-    return os << format_as(t);
 }
 
 class parser {

@@ -12,6 +12,7 @@
 #pragma once
 
 #include "absl/container/inlined_vector.h"
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "bytes/iobuf.h"
 
@@ -19,7 +20,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <iosfwd>
 #include <span>
 
 class bytes_view;
@@ -99,7 +99,7 @@ public:
         return a.data_ < b.data_;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const bytes& b);
+    fmt::iterator format_to(fmt::iterator it) const;
 
 private:
     container_type data_;
@@ -159,7 +159,9 @@ public:
           a.begin(), a.end(), b.begin(), b.end());
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const bytes_view& b);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{bytes:{}}}", size());
+    }
 
 private:
     explicit bytes_view(container_type data)
@@ -304,3 +306,29 @@ operator^(const std::array<char, Size>& a, const std::array<char, Size>& b) {
       a.begin(), a.end(), b.begin(), out.begin(), std::bit_xor<>());
     return out;
 }
+
+template<>
+struct fmt::formatter<::bytes> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    template<typename FormatContext>
+    auto format(const ::bytes& v, FormatContext& ctx) const {
+        fmt::memory_buffer buf;
+        v.format_to(fmt::appender(buf));
+        return std::copy(buf.begin(), buf.end(), ctx.out());
+    }
+};
+
+template<>
+struct fmt::formatter<bytes_view> {
+    constexpr auto parse(fmt::format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    template<typename FormatContext>
+    auto format(const bytes_view& v, FormatContext& ctx) const {
+        fmt::memory_buffer buf;
+        v.format_to(fmt::appender(buf));
+        return std::copy(buf.begin(), buf.end(), ctx.out());
+    }
+};

@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "base/outcome.h"
 #include "base/seastarx.h"
 #include "iceberg/table_requirement.h"
@@ -43,6 +44,15 @@ public:
 
     virtual ~action() = default;
 };
-std::ostream& operator<<(std::ostream& o, action::errc e);
+constexpr std::string_view to_string_view(action::errc e) {
+    switch (e) {
+    case action::errc::unexpected_state:
+        return "action::errc::unexpected_state";
+    case action::errc::io_failed:
+        return "action::errc::io_failed";
+    case action::errc::shutting_down:
+        return "action::errc::shutting_down";
+    }
+}
 
 } // namespace iceberg

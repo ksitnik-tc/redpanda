@@ -625,15 +625,19 @@ bool operator==(
     return lhs.raw() == rhs.raw();
 }
 
+fmt::iterator protobuf_schema_definition::format_to(fmt::iterator it) const {
+    return fmt::format_to(
+      it,
+      "type: {}, definition: {}, references: {}, metadata: {}",
+      to_string_view(type()),
+      raw(),
+      refs(),
+      meta());
+}
+
 std::ostream&
 operator<<(std::ostream& os, const protobuf_schema_definition& def) {
-    fmt::print(
-      os,
-      "type: {}, definition: {}, references: {}, metadata: {}",
-      to_string_view(def.type()),
-      def.raw(),
-      def.refs(),
-      def.meta());
+    fmt::print(os, "{}", def);
     return os;
 }
 
@@ -1000,7 +1004,7 @@ struct fmt::formatter<pandaproxy::schema_registry::dp_error_collector::err> {
           e.filename,
           e.element_name,
           e.descriptor->DebugString(),
-          e.location,
+          static_cast<int>(e.location),
           e.message);
     }
 };

@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "iceberg/catalog.h"
 #include "iceberg/datatypes.h"
 #include "iceberg/partition.h"
@@ -32,7 +33,16 @@ public:
         // The system is shutting down.
         shutting_down,
     };
-    friend std::ostream& operator<<(std::ostream&, const errc&);
+    friend constexpr std::string_view to_string_view(errc e) {
+        switch (e) {
+        case errc::not_supported:
+            return "schema_manager::errc::not_supported";
+        case errc::failed:
+            return "schema_manager::errc::failed";
+        case errc::shutting_down:
+            return "schema_manager::errc::shutting_down";
+        }
+    }
 
     virtual ss::future<checked<std::nullopt_t, errc>> ensure_table_schema(
       const iceberg::table_identifier&,

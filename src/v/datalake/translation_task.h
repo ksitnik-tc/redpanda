@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "base/format_to.h"
 #include "base/outcome.h"
 #include "datalake/cloud_data_io.h"
 #include "datalake/coordinator/translated_offset_range.h"
@@ -106,7 +107,28 @@ public:
     size_t buffered_bytes() const;
 
 private:
-    friend std::ostream& operator<<(std::ostream&, errc);
+    friend constexpr std::string_view to_string_view(errc e) {
+        switch (e) {
+        case errc::file_io_error:
+            return "local file IO error";
+        case errc::cloud_io_error:
+            return "cloud IO error";
+        case errc::flush_error:
+            return "writer flush error";
+        case errc::no_data:
+            return "no data to translate";
+        case errc::oom_error:
+            return "memory exhausted";
+        case errc::time_limit_exceeded:
+            return "time limit exceeded";
+        case errc::shutting_down:
+            return "shutting down";
+        case errc::out_of_disk:
+            return "disk exhausted";
+        case errc::type_resolution_error:
+            return "type resolution error";
+        }
+    }
 
     ss::future<errc> delete_remote_files(
       chunked_vector<remote_path>, retry_chain_node& parent_rcn);

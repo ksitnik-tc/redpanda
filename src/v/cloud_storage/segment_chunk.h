@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 
 #include <seastar/core/expiring_fifo.hh>
@@ -30,7 +31,16 @@ enum class chunk_state {
     hydrated,
 };
 
-std::ostream& operator<<(std::ostream& os, chunk_state);
+constexpr std::string_view to_string_view(chunk_state c) {
+    switch (c) {
+    case chunk_state::not_available:
+        return "not available";
+    case chunk_state::download_in_progress:
+        return "download in progress";
+    case chunk_state::hydrated:
+        return "hydrated";
+    }
+}
 
 struct segment_chunk {
     chunk_state current_state;

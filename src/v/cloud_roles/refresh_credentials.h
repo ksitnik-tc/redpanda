@@ -236,3 +236,7 @@ refresh_credentials make_refresh_credentials(
   ss::sstring metrics_tag = "");
 
 } // namespace cloud_roles
+
+template<>
+struct fmt::formatter<cloud_roles::refresh_credentials>
+  : fmt::ostream_formatter {};

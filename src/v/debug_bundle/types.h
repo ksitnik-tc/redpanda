@@ -12,6 +12,7 @@
 #pragma once
 
 #include "absl/container/btree_set.h"
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "container/chunked_vector.h"
 #include "model/metadata.h"
@@ -27,7 +28,6 @@
 #include <fmt/format.h>
 
 #include <chrono>
-#include <iosfwd>
 #include <optional>
 #include <variant>
 namespace debug_bundle {
@@ -52,7 +52,6 @@ constexpr std::string_view to_string_view(special_date d) {
     }
 }
 
-std::ostream& operator<<(std::ostream& o, const special_date& d);
 std::istream& operator>>(std::istream& i, special_date& d);
 
 /// Defines which clock the debug bundle will use
@@ -82,9 +81,12 @@ struct partition_selection {
 
     friend bool operator==(
       const partition_selection&, const partition_selection&) = default;
-};
 
-std::ostream& operator<<(std::ostream& o, const partition_selection& p);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it, "{}/{}/{}", tn.ns, tn.tp, fmt::join(partitions, ","));
+    }
+};
 
 struct label_selection {
     ss::sstring key;
@@ -93,7 +95,9 @@ struct label_selection {
     friend bool
     operator==(const label_selection&, const label_selection&) = default;
 
-    friend std::ostream& operator<<(std::ostream& o, const label_selection& l);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{}={}", key, value);
+    }
 };
 
 /// Parameters used to spawn rpk debug bundle
@@ -132,8 +136,6 @@ constexpr std::string_view to_string_view(debug_bundle_status s) {
     }
 }
 
-std::ostream& operator<<(std::ostream& o, const debug_bundle_status& s);
-
 /// Status of the debug bundle process
 struct debug_bundle_status_data {
     job_id_t job_id;
@@ -151,23 +153,8 @@ struct debug_bundle_status_data {
 } // namespace debug_bundle
 
 template<>
-struct fmt::formatter<debug_bundle::special_date>
-  : formatter<std::string_view> {
-    auto format(debug_bundle::special_date d, format_context& ctx) const
-      -> format_context::iterator;
-};
-
-template<>
 struct fmt::formatter<debug_bundle::time_variant>
   : formatter<std::string_view> {
     auto format(const debug_bundle::time_variant&, format_context& ctx) const
-      -> format_context::iterator;
-};
-
-template<>
-struct fmt::formatter<debug_bundle::partition_selection>
-  : formatter<std::string_view> {
-    auto
-    format(const debug_bundle::partition_selection&, format_context& ctx) const
       -> format_context::iterator;
 };

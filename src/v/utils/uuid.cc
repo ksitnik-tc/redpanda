@@ -39,8 +39,8 @@ uuid_t uuid_t::from_string(std::string_view str) {
     return uuid_t(gen(str.begin(), str.end()));
 }
 
-std::ostream& operator<<(std::ostream& os, const uuid_t& u) {
-    return os << fmt::format("{}", u._uuid);
+fmt::iterator uuid_t::format_to(fmt::iterator it) const {
+    return fmt::format_to(it, "{}", boost::uuids::to_string(_uuid));
 }
 
 std::istream& operator>>(std::istream& is, uuid_t& u) {

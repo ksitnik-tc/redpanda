@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "base/vassert.h"
 #include "reflection/adl.h"
@@ -39,6 +40,14 @@ struct data_policy
 
     ss::sstring fn_name;
     ss::sstring sct_name;
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "function_name: {} script_name: {}",
+          function_name(),
+          script_name());
+    }
 
     friend std::ostream&
     operator<<(std::ostream& os, const data_policy& datapolicy);
