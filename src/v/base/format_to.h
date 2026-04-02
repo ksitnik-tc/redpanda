@@ -13,8 +13,25 @@
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <fmt/std.h>
 
 namespace fmt {
+
+/// Formatter for std::unique_ptr<T> — formats the pointee or "null".
+template<typename T, typename D>
+requires is_formattable<T>::value
+struct formatter<std::unique_ptr<T, D>> {
+    constexpr auto parse(format_parse_context& ctx) const {
+        return ctx.begin();
+    }
+    template<typename Ctx>
+    auto format(const std::unique_ptr<T, D>& p, Ctx& ctx) const {
+        if (p) {
+            return fmt::format_to(ctx.out(), "{}", *p);
+        }
+        return fmt::format_to(ctx.out(), "null");
+    }
+};
 
 using iterator = format_context::iterator;
 
@@ -61,8 +78,29 @@ struct formatter<T> {
      * formatting. It delegates the work entirely to the object's `format_to`
      * method.
      */
-    iterator format(const T& obj, format_context& ctx) const {
-        return obj.format_to(ctx.out());
+    template<typename FormatContext>
+    auto format(const T& obj, FormatContext& ctx) const {
+        // Format into a temporary buffer, then copy to the output.
+        // This supports both format_context (fmt::format) and
+        // basic_format_context<back_insert_iterator<string>> (fmt::to_string).
+        fmt::memory_buffer buf;
+        obj.format_to(fmt::appender(buf));
+        return std::copy(buf.begin(), buf.end(), ctx.out());
+    }
+};
+
+/// Concept for enum types that provide a to_string_view overload.
+template<typename T>
+concept HasToStringView = std::is_enum_v<T> && requires(T v) {
+    { to_string_view(v) } -> std::convertible_to<std::string_view>;
+};
+
+/// Auto-formatter for enums with to_string_view.
+template<HasToStringView T>
+struct formatter<T> : formatter<std::string_view> {
+    template<typename FormatContext>
+    auto format(T e, FormatContext& ctx) const {
+        return formatter<std::string_view>::format(to_string_view(e), ctx);
     }
 };
 
@@ -80,5 +118,12 @@ template<fmt::HasFormatToMethod T>
 ostream& operator<<(ostream& os, const T& obj) {
     fmt::print(os, "{}", obj);
     return os;
+}
+
+// Auto-generate operator<< for enums with to_string_view.
+template<fmt::HasToStringView T>
+// NOLINTNEXTLINE(*-dcl58-*)
+ostream& operator<<(ostream& os, const T& obj) {
+    return os << to_string_view(obj);
 }
 } // namespace std
