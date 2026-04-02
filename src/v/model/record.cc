@@ -67,12 +67,6 @@ record_batch_iterator::record_batch_iterator(int32_t rc, iobuf_parser p)
   : _record_count(rc)
   , _parser(std::move(p)) {}
 
-std::ostream& operator<<(std::ostream& os, const tx_range& range) {
-    fmt::print(
-      os, "pid: {}, range: [{}, {}]", range.pid, range.first, range.last);
-    return os;
-}
-
 void record_batch_header::reset_size_checksum_metadata(const iobuf& records) {
     size_bytes = model::packed_record_batch_header_size + records.size_bytes();
     crc = model::crc_record_batch(*this, records);

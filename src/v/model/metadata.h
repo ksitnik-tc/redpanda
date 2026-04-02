@@ -12,6 +12,7 @@
 #pragma once
 
 #include "absl/hash/hash.h"
+#include "base/format_to.h"
 #include "base/seastarx.h"
 #include "base/units.h"
 #include "model/fundamental.h"
@@ -57,8 +58,15 @@ struct broker_properties
 
     bool operator==(const broker_properties& other) const = default;
 
-    friend std::ostream&
-    operator<<(std::ostream&, const model::broker_properties&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it,
+          "{{cores {}, mem_available {}, disk_available {}, in_fips_mode {}}}",
+          cores,
+          available_memory_bytes,
+          available_disk_gb,
+          in_fips_mode);
+    }
 
     auto serde_fields() {
         return std::tie(
@@ -88,7 +96,9 @@ struct broker_endpoint final
       : address(std::move(address)) {}
 
     bool operator==(const broker_endpoint&) const = default;
-    friend std::ostream& operator<<(std::ostream&, const broker_endpoint&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{}:{}}}", name, address);
+    }
 
     static std::optional<ss::sstring>
     validate_not_is_addr_any(const broker_endpoint& ep) {
@@ -169,8 +179,26 @@ enum class membership_state : int8_t { active, draining, removed };
  */
 enum class maintenance_state { active, inactive };
 
-std::ostream& operator<<(std::ostream&, membership_state);
-std::ostream& operator<<(std::ostream&, maintenance_state);
+constexpr std::string_view to_string_view(membership_state st) {
+    switch (st) {
+    case membership_state::active:
+        return "active";
+    case membership_state::draining:
+        return "draining";
+    case membership_state::removed:
+        return "removed";
+    }
+    return "unknown";
+}
+constexpr std::string_view to_string_view(maintenance_state st) {
+    switch (st) {
+    case maintenance_state::active:
+        return "active";
+    case maintenance_state::inactive:
+        return "inactive";
+    }
+    __builtin_unreachable();
+}
 
 class broker
   : public serde::
@@ -242,14 +270,14 @@ public:
           _id, _kafka_advertised_listeners, _rpc_address, _rack, _properties);
     }
 
+    fmt::iterator format_to(fmt::iterator it) const;
+
 private:
     node_id _id;
     std::vector<broker_endpoint> _kafka_advertised_listeners;
     net::unresolved_address _rpc_address;
     std::optional<rack_id> _rack;
     broker_properties _properties;
-
-    friend std::ostream& operator<<(std::ostream&, const broker&);
 };
 
 /// type representing single replica assignment it contains the id of a broker
@@ -260,7 +288,9 @@ struct broker_shard {
     /// however, seastar uses unsized-ints (unsigned)
     /// and for predictability we need fixed-sized ints
     uint32_t shard;
-    friend std::ostream& operator<<(std::ostream&, const broker_shard&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{node_id: {}, shard: {}}}", node_id, shard);
+    }
     bool operator==(const broker_shard&) const = default;
     auto operator<=>(const model::broker_shard&) const = default;
 
@@ -295,7 +325,14 @@ struct partition_metadata
     std::vector<broker_shard> replicas;
     std::optional<model::node_id> leader_node;
 
-    friend std::ostream& operator<<(std::ostream&, const partition_metadata&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        it = fmt::format_to(it, "{{id: {}, leader_id: ", id);
+        if (leader_node)
+            it = fmt::format_to(it, "{}", *leader_node);
+        else
+            it = fmt::format_to(it, "nullopt");
+        return fmt::format_to(it, ", replicas: {}}}", replicas);
+    }
     friend bool
     operator==(const partition_metadata&, const partition_metadata&) = default;
 
@@ -306,6 +343,16 @@ enum class isolation_level : int8_t {
     read_uncommitted = 0,
     read_committed = 1,
 };
+
+constexpr std::string_view to_string_view(isolation_level l) {
+    switch (l) {
+    case isolation_level::read_uncommitted:
+        return "read_uncommitted";
+    case isolation_level::read_committed:
+        return "read_committed";
+    }
+    return "unknown";
+}
 
 struct topic_namespace_view {
     topic_namespace_view(const model::ns& n, const model::topic& t)
@@ -331,7 +378,9 @@ struct topic_namespace_view {
     const model::ns& ns;
     const model::topic& tp;
 
-    friend std::ostream& operator<<(std::ostream&, const topic_namespace_view&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{}/{}}}", ns(), tp());
+    }
 };
 
 struct topic_namespace {
@@ -390,7 +439,9 @@ struct topic_namespace {
 
     ss::sstring path() const;
 
-    friend std::ostream& operator<<(std::ostream&, const topic_namespace&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{}/{}}}", ns(), tp());
+    }
 };
 
 struct topic_namespace_hash {
@@ -437,7 +488,10 @@ struct topic_metadata
     topic_namespace tp_ns;
     std::vector<partition_metadata> partitions;
 
-    friend std::ostream& operator<<(std::ostream&, const topic_metadata&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it, "{{topic_namespace: {}, partitons: {}}}", tp_ns, partitions);
+    }
     friend bool
     operator==(const topic_metadata&, const topic_metadata&) = default;
 
@@ -453,7 +507,23 @@ enum class cloud_credentials_source {
     azure_vm_instance_metadata = 5,
 };
 
-std::ostream& operator<<(std::ostream& os, const cloud_credentials_source& cs);
+constexpr std::string_view to_string_view(cloud_credentials_source cs) {
+    switch (cs) {
+    case cloud_credentials_source::config_file:
+        return "config_file";
+    case cloud_credentials_source::aws_instance_metadata:
+        return "aws_instance_metadata";
+    case cloud_credentials_source::sts:
+        return "sts";
+    case cloud_credentials_source::gcp_instance_metadata:
+        return "gcp_instance_metadata";
+    case cloud_credentials_source::azure_aks_oidc_federation:
+        return "azure_aks_oidc_federation";
+    case cloud_credentials_source::azure_vm_instance_metadata:
+        return "azure_vm_instance_metadata";
+    }
+    return "unknown";
+}
 
 enum class partition_autobalancing_mode {
     off = 0,
@@ -461,16 +531,16 @@ enum class partition_autobalancing_mode {
     continuous,
 };
 
-inline std::ostream&
-operator<<(std::ostream& o, const partition_autobalancing_mode& m) {
+constexpr std::string_view to_string_view(partition_autobalancing_mode m) {
     switch (m) {
-    case model::partition_autobalancing_mode::off:
-        return o << "off";
-    case model::partition_autobalancing_mode::node_add:
-        return o << "node_add";
-    case model::partition_autobalancing_mode::continuous:
-        return o << "continuous";
+    case partition_autobalancing_mode::off:
+        return "off";
+    case partition_autobalancing_mode::node_add:
+        return "node_add";
+    case partition_autobalancing_mode::continuous:
+        return "continuous";
     }
+    return "unknown";
 }
 
 enum class cloud_storage_backend : uint8_t {
@@ -483,23 +553,24 @@ enum class cloud_storage_backend : uint8_t {
     unknown
 };
 
-inline std::ostream& operator<<(std::ostream& os, cloud_storage_backend csb) {
+constexpr std::string_view to_string_view(cloud_storage_backend csb) {
     switch (csb) {
     case cloud_storage_backend::aws:
-        return os << "aws";
+        return "aws";
     case cloud_storage_backend::google_s3_compat:
-        return os << "google_s3_compat";
+        return "google_s3_compat";
     case cloud_storage_backend::azure:
-        return os << "azure";
+        return "azure";
     case cloud_storage_backend::minio:
-        return os << "minio";
+        return "minio";
     case cloud_storage_backend::oracle_s3_compat:
-        return os << "oracle_s3_compat";
+        return "oracle_s3_compat";
     case cloud_storage_backend::linode_s3_compat:
-        return os << "linode_s3_compat";
+        return "linode_s3_compat";
     case cloud_storage_backend::unknown:
-        return os << "unknown";
+        return "unknown";
     }
+    return "unknown";
 }
 
 enum class leader_balancer_mode : uint8_t {
@@ -522,8 +593,8 @@ leader_balancer_mode_to_string(leader_balancer_mode mode) {
     }
 }
 
-inline std::ostream& operator<<(std::ostream& os, leader_balancer_mode mode) {
-    return os << leader_balancer_mode_to_string(mode);
+constexpr std::string_view to_string_view(leader_balancer_mode mode) {
+    return leader_balancer_mode_to_string(mode);
 }
 
 enum class cloud_storage_chunk_eviction_strategy {
@@ -532,16 +603,17 @@ enum class cloud_storage_chunk_eviction_strategy {
     predictive = 2,
 };
 
-inline std::ostream&
-operator<<(std::ostream& os, cloud_storage_chunk_eviction_strategy st) {
+constexpr std::string_view
+to_string_view(cloud_storage_chunk_eviction_strategy st) {
     switch (st) {
     case cloud_storage_chunk_eviction_strategy::eager:
-        return os << "eager";
+        return "eager";
     case cloud_storage_chunk_eviction_strategy::capped:
-        return os << "capped";
+        return "capped";
     case cloud_storage_chunk_eviction_strategy::predictive:
-        return os << "predictive";
+        return "predictive";
     }
+    return "unknown";
 }
 
 enum class fetch_read_strategy : uint8_t {
@@ -566,7 +638,9 @@ constexpr const char* fetch_read_strategy_to_string(fetch_read_strategy s) {
     }
 }
 
-std::ostream& operator<<(std::ostream&, fetch_read_strategy);
+constexpr std::string_view to_string_view(fetch_read_strategy s) {
+    return fetch_read_strategy_to_string(s);
+}
 std::istream& operator>>(std::istream&, fetch_read_strategy&);
 
 /**
@@ -603,7 +677,9 @@ constexpr const char* write_caching_mode_to_string(write_caching_mode s) {
 std::optional<write_caching_mode>
   write_caching_mode_from_string(std::string_view);
 
-std::ostream& operator<<(std::ostream&, write_caching_mode);
+constexpr std::string_view to_string_view(write_caching_mode s) {
+    return write_caching_mode_to_string(s);
+}
 std::istream& operator>>(std::istream&, write_caching_mode&);
 
 // Storage mode for a Redpanda topic
@@ -637,7 +713,9 @@ constexpr const char* redpanda_storage_mode_to_string(redpanda_storage_mode m) {
 std::optional<redpanda_storage_mode>
   redpanda_storage_mode_from_string(std::string_view);
 
-std::ostream& operator<<(std::ostream&, redpanda_storage_mode);
+constexpr std::string_view to_string_view(redpanda_storage_mode m) {
+    return redpanda_storage_mode_to_string(m);
+}
 std::istream& operator>>(std::istream&, redpanda_storage_mode&);
 
 enum class recovery_validation_mode : std::uint16_t {
@@ -651,7 +729,18 @@ enum class recovery_validation_mode : std::uint16_t {
     no_check = 0xff,
 };
 
-std::ostream& operator<<(std::ostream&, recovery_validation_mode);
+constexpr std::string_view to_string_view(recovery_validation_mode vm) {
+    using enum recovery_validation_mode;
+    switch (vm) {
+    case check_manifest_existence:
+        return "check_manifest_existence";
+    case check_manifest_and_segment_metadata:
+        return "check_manifest_and_segment_metadata";
+    case no_check:
+        return "no_check";
+    }
+    return "unknown";
+}
 std::istream& operator>>(std::istream&, recovery_validation_mode&);
 
 // Iceberg enablement options for a topic
@@ -722,6 +811,7 @@ public:
     }
 
     bool operator==(const iceberg_mode&) const = default;
+    fmt::iterator format_to(fmt::iterator it) const;
 
     friend void write_nested(iobuf& out, const iceberg_mode& m);
 
@@ -770,7 +860,6 @@ private:
       _impl;
 };
 
-std::ostream& operator<<(std::ostream&, const iceberg_mode&);
 std::istream& operator>>(std::istream&, iceberg_mode&);
 
 // How to handle invalid records during Iceberg translation.
@@ -781,7 +870,15 @@ enum class iceberg_invalid_record_action : uint8_t {
     dlq_table = 1,
 };
 
-std::ostream& operator<<(std::ostream&, const iceberg_invalid_record_action&);
+constexpr std::string_view to_string_view(iceberg_invalid_record_action a) {
+    switch (a) {
+    case iceberg_invalid_record_action::drop:
+        return "drop";
+    case iceberg_invalid_record_action::dlq_table:
+        return "dlq_table";
+    }
+    return "unknown";
+}
 std::istream& operator>>(std::istream&, iceberg_invalid_record_action&);
 
 enum class kafka_batch_validation_mode : uint8_t {
@@ -805,31 +902,12 @@ kafka_batch_validation_mode_to_string(const kafka_batch_validation_mode& m) {
 std::optional<kafka_batch_validation_mode>
 kafka_batch_validation_mode_from_string(std::string_view s);
 
-std::ostream&
-operator<<(std::ostream& o, const kafka_batch_validation_mode& mode);
-
+constexpr std::string_view to_string_view(kafka_batch_validation_mode m) {
+    return kafka_batch_validation_mode_to_string(m);
+}
 std::istream& operator>>(std::istream& i, kafka_batch_validation_mode& mode);
 
 } // namespace model
-
-template<>
-struct fmt::formatter<model::isolation_level> final
-  : fmt::formatter<std::string_view> {
-    using isolation_level = model::isolation_level;
-    template<typename FormatContext>
-    auto format(const isolation_level& s, FormatContext& ctx) const {
-        std::string_view str = "unknown";
-        switch (s) {
-        case isolation_level::read_uncommitted:
-            str = "read_uncommitted";
-            break;
-        case isolation_level::read_committed:
-            str = "read_committed";
-            break;
-        }
-        return fmt::format_to(ctx.out(), "{}", str);
-    }
-};
 
 namespace std {
 template<>

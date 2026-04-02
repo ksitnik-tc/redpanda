@@ -187,7 +187,14 @@ inline bool is_deletion_enabled(cleanup_policy_bitflags flags) {
            == cleanup_policy_bitflags::deletion;
 }
 
-std::ostream& operator<<(std::ostream&, cleanup_policy_bitflags);
+inline std::string_view to_string_view(cleanup_policy_bitflags c) {
+    if (c == cleanup_policy_bitflags::none) return "none";
+    if (is_compaction_enabled(c) && is_deletion_enabled(c))
+        return "compact,delete";
+    if (is_compaction_enabled(c)) return "compact";
+    if (is_deletion_enabled(c)) return "delete";
+    return "none";
+}
 std::istream& operator>>(std::istream&, cleanup_policy_bitflags&);
 
 // Named after Kafka compaction.strategy topic property
@@ -200,7 +207,17 @@ enum class compaction_strategy : int8_t {
     /// \brief header field compaction is not yet supported
     header,
 };
-std::ostream& operator<<(std::ostream&, compaction_strategy);
+constexpr std::string_view to_string_view(compaction_strategy c) {
+    switch (c) {
+    case compaction_strategy::offset:
+        return "offset";
+    case compaction_strategy::timestamp:
+        return "timestamp";
+    case compaction_strategy::header:
+        return "header";
+    }
+    __builtin_unreachable();
+}
 std::istream& operator>>(std::istream&, compaction_strategy&);
 
 using term_id = named_type<int64_t, struct model_raft_term_id_type>;
@@ -315,7 +332,10 @@ struct topic_partition_view {
 
     model::topic_view topic;
     model::partition_id partition;
-    friend std::ostream& operator<<(std::ostream&, const topic_partition_view&);
+
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{}/{}}}", topic(), partition());
+    }
     friend auto operator<=>(
       const topic_partition_view&, const topic_partition_view&) = default;
     template<typename H>
@@ -358,7 +378,9 @@ struct topic_partition {
         return topic_partition_view(topic, partition);
     }
 
-    friend std::ostream& operator<<(std::ostream&, const topic_partition&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{}/{}}}", topic(), partition());
+    }
 
     friend void read_nested(
       iobuf_parser& in, topic_partition& tp, const size_t bytes_left_limit) {
@@ -422,7 +444,10 @@ struct ntp {
     ss::sstring path() const;
     std::filesystem::path topic_path() const;
 
-    friend std::ostream& operator<<(std::ostream&, const ntp&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(
+          it, "{{{}/{}/{}}}", ns(), tp.topic(), tp.partition());
+    }
 };
 
 /**
@@ -439,7 +464,18 @@ enum class control_record_type : int16_t {
     tx_commit = 1,
     unknown = -1
 };
-std::ostream& operator<<(std::ostream&, const control_record_type&);
+
+constexpr std::string_view to_string_view(control_record_type crt) {
+    switch (crt) {
+    case control_record_type::tx_abort:
+        return "tx_abort";
+    case control_record_type::tx_commit:
+        return "tx_commit";
+    case control_record_type::unknown:
+        return "unknown";
+    }
+    return "unknown";
+}
 
 using control_record_version
   = named_type<int16_t, struct control_record_version_tag>;
@@ -523,7 +559,25 @@ static_assert(
     shadow_indexing_mode::full, shadow_indexing_mode::drop_full)
   == shadow_indexing_mode::disabled);
 
-std::ostream& operator<<(std::ostream&, const shadow_indexing_mode&);
+constexpr std::string_view to_string_view(shadow_indexing_mode si) {
+    switch (si) {
+    case shadow_indexing_mode::disabled:
+        return "disabled";
+    case shadow_indexing_mode::archival:
+        return "archival";
+    case shadow_indexing_mode::fetch:
+        return "fetch";
+    case shadow_indexing_mode::full:
+        return "full";
+    case shadow_indexing_mode::drop_archival:
+        return "drop_archival";
+    case shadow_indexing_mode::drop_fetch:
+        return "drop_fetch";
+    case shadow_indexing_mode::drop_full:
+        return "drop_full";
+    }
+    return "unknown";
+}
 
 using client_address_t = ss::socket_address;
 
@@ -554,7 +608,6 @@ constexpr std::string_view to_string_view(fips_mode_flag f) {
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const fips_mode_flag& f);
 std::istream& operator>>(std::istream& is, fips_mode_flag& f);
 
 struct topic_id : named_type<uuid_t, struct topic_id_tag> {
@@ -592,7 +645,9 @@ struct topic_id_partition {
     bool operator==(const topic_id_partition& other) const = default;
     auto operator<=>(const topic_id_partition& other) const noexcept = default;
 
-    friend std::ostream& operator<<(std::ostream&, const topic_id_partition&);
+    fmt::iterator format_to(fmt::iterator it) const {
+        return fmt::format_to(it, "{{{}/{}}}", topic_id(), partition());
+    }
 
     friend void read_nested(
       iobuf_parser& in, topic_id_partition& tp, const size_t bytes_left_limit) {
@@ -615,6 +670,43 @@ struct topic_id_partition {
 };
 
 } // namespace model
+
+template<>
+struct fmt::formatter<model::cleanup_policy_bitflags>
+  : fmt::formatter<std::string_view> {
+    auto
+    format(model::cleanup_policy_bitflags e, fmt::format_context& ctx) const {
+        return formatter<std::string_view>::format(to_string_view(e), ctx);
+    }
+};
+template<>
+struct fmt::formatter<model::compaction_strategy>
+  : fmt::formatter<std::string_view> {
+    auto format(model::compaction_strategy e, fmt::format_context& ctx) const {
+        return formatter<std::string_view>::format(to_string_view(e), ctx);
+    }
+};
+template<>
+struct fmt::formatter<model::control_record_type>
+  : fmt::formatter<std::string_view> {
+    auto format(model::control_record_type e, fmt::format_context& ctx) const {
+        return formatter<std::string_view>::format(to_string_view(e), ctx);
+    }
+};
+template<>
+struct fmt::formatter<model::shadow_indexing_mode>
+  : fmt::formatter<std::string_view> {
+    auto format(model::shadow_indexing_mode e, fmt::format_context& ctx) const {
+        return formatter<std::string_view>::format(to_string_view(e), ctx);
+    }
+};
+template<>
+struct fmt::formatter<model::fips_mode_flag>
+  : fmt::formatter<std::string_view> {
+    auto format(model::fips_mode_flag e, fmt::format_context& ctx) const {
+        return formatter<std::string_view>::format(to_string_view(e), ctx);
+    }
+};
 
 namespace kafka {
 

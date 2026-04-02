@@ -11,11 +11,13 @@
 
 #pragma once
 
+#include "base/format_to.h"
+
 #include <array>
 #include <cstdint>
 #include <iosfwd>
 #include <limits>
-#include <ostream>
+#include <string_view>
 #include <type_traits>
 
 namespace model {
@@ -60,33 +62,23 @@ constexpr auto all_batch_compression_types = [] {
     return types;
 }();
 
-/// operators needed for boost::lexical_cast<compression>
-/// inline to prevent library depdency with the v::compression module
-inline std::ostream& operator<<(std::ostream& os, const compression& c) {
+inline constexpr std::string_view to_string_view(compression c) {
     switch (c) {
     case compression::none:
-        os << "none";
-        break;
+        return "none";
     case compression::gzip:
-        os << "gzip";
-        break;
+        return "gzip";
     case compression::snappy:
-        os << "snappy";
-        break;
+        return "snappy";
     case compression::lz4:
-        os << "lz4";
-        break;
+        return "lz4";
     case compression::zstd:
-        os << "zstd";
-        break;
+        return "zstd";
     case compression::producer:
-        os << "producer";
-        break;
+        return "producer";
     default:
-        os << "ERROR";
-        break;
+        return "ERROR";
     }
-    return os;
 }
 std::istream& operator>>(std::istream&, compression&);
 
